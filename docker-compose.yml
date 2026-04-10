@@ -1,0 +1,16 @@
+services:
+  miko-rs:
+    image: ghcr.io/stkevintan/miko.rs:latest
+    container_name: miko-rs
+    user: 1000:1000
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - DATABASE_URL=sqlite:///app/data/miko.db
+      - SUBSONIC_DATA_DIR=/app/data
+      - JWT_SECRET=${JWT_SECRET}
+      - PASSWORD_SECRET=${PASSWORD_SECRET}
+    volumes:
+      - ./data:/app/data
+      - ~/Music:/music:ro
