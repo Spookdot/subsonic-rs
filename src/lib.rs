@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use rand::{distr::Alphanumeric, prelude::*};
 
 // TODO Account for additional OpenSubsonic fields?
 // And perhaps limit status to "ok" and "failed" Literals
@@ -16,33 +17,53 @@ pub struct PingResponse {
     pub subsonic_response: SubsonicResponse
 }
 
-// TODO move ping into a full client that re-uses the reqwest client
-/// Simple ping function to verify a working connection with a Subsonic server
-pub async fn ping(url: &str, username: &str, password: &str) -> PingResponse {
-    // TODO Replace hard coded salt with actual random salt
-    let salt = "random_salt";
+pub struct SubsonicClient {
+    client: reqwest::Client,
+    url: String,
+    username: String,
+    salt: String,
+    hashed_password: String
+}
 
-    let salted_password = password.to_owned() + salt;
-    let hashed_password = format!("{:x}", md5::compute(salted_password.as_bytes()));
+impl SubsonicClient {
+    pub fn new(url: &str, username: &str, password: &str) -> Self {
+        let rng = rand::rng();
+        let salt: String = rng.sample_iter(Alphanumeric)
+            .take(64)
+            .map(char::from)
+            .collect();
 
-    let query_params = &[
-        ("u", username),
-        ("t", hashed_password.as_str()),
-        ("s", salt),
-        ("v", "1.16.0"), // TODO might wanna check if this is the way to go for the version
-        ("f", "json")
-    ];
+        let salted_password = password.to_owned() + salt.as_str();
+        let hashed_password = format!("{:x}", md5::compute(salted_password.as_bytes()));
 
-    let client = reqwest::Client::new();
-    // TODO replace unwraps with actual error handling
-    client.post(url.to_owned() + "/rest/ping.view")
-        .query(query_params)
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap()
+        Self {
+            client: reqwest::Client::new(),
+            url: url.to_owned(),
+            username: username.to_owned(),
+            salt,
+            hashed_password
+        }
+    }
+
+    pub async fn ping(self) -> PingResponse {
+        let query_params = &[
+            ("u", self.username.as_str()),
+            ("t", self.hashed_password.as_str()),
+            ("s", self.salt.as_str()),
+            ("v", "1.16.0"), // TODO might wanna check if this is the way to go for the version
+            ("f", "json")
+        ];
+
+        // TODO replace unwraps with actual error handling
+        self.client.post(self.url + "/rest/ping.view")
+            .query(query_params)
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -56,7 +77,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_ping() {
-        let ping_response = ping(URL, USERNAME, PASSWORD).await;
+        let subsonic_client = SubsonicClient::new(URL, USERNAME, PASSWORD);
+        let ping_response = subsonic_client.ping().await;
         assert_eq!(ping_response.subsonic_response.status, String::from("ok"));
     }
 }
