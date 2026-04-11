@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use rand::{distr::Alphanumeric, prelude::*};
+use serde::Serialize;
 
 // TODO Account for additional OpenSubsonic fields?
 // And perhaps limit status to "ok" and "failed" Literals
@@ -11,18 +12,30 @@ pub struct SubsonicResponse {
     pub version: String
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PingResponse {
-    pub subsonic_response: SubsonicResponse
+#[derive(Serialize)]
+pub struct SubsonicAuthentication {
+    #[serde(rename = "u")]
+    username: String,
+    #[serde(rename = "t")]
+    token: String,
+    #[serde(rename = "s")]
+    salt: String,
+    #[serde(rename = "v")]
+    version: String,
+    #[serde(rename = "f")]
+    format: String,
 }
 
 pub struct SubsonicClient {
     client: reqwest::Client,
     url: String,
-    username: String,
-    salt: String,
-    hashed_password: String
+    authentication: SubsonicAuthentication
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct PingResponse {
+    pub subsonic_response: SubsonicResponse
 }
 
 impl SubsonicClient {
@@ -36,27 +49,25 @@ impl SubsonicClient {
         let salted_password = password.to_owned() + salt.as_str();
         let hashed_password = format!("{:x}", md5::compute(salted_password.as_bytes()));
 
+        let authentication = SubsonicAuthentication {
+            username: username.to_owned(),
+            token: hashed_password.to_owned(),
+            salt,
+            version: String::from("1.16.0"), // TODO might wanna check if this is the way to go for the version
+            format: String::from("json")
+        };
+
         Self {
             client: reqwest::Client::new(),
             url: url.to_owned(),
-            username: username.to_owned(),
-            salt,
-            hashed_password
+            authentication
         }
     }
 
     pub async fn ping(self) -> PingResponse {
-        let query_params = &[
-            ("u", self.username.as_str()),
-            ("t", self.hashed_password.as_str()),
-            ("s", self.salt.as_str()),
-            ("v", "1.16.0"), // TODO might wanna check if this is the way to go for the version
-            ("f", "json")
-        ];
-
         // TODO replace unwraps with actual error handling
-        self.client.post(self.url + "/rest/ping.view")
-            .query(query_params)
+        self.client.get(self.url + "/rest/ping.view")
+            .query(&self.authentication)
             .send()
             .await
             .unwrap()
