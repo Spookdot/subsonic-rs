@@ -1,3 +1,6 @@
 .env
 /target
 /data
+/src/generated
+openapi.json
+.idea

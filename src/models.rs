@@ -1,3 +1,4 @@
+use crate::types::SubsonicFailureResponse;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
@@ -7,25 +8,45 @@ pub struct SubsonicError {
     pub message: String
 }
 
+pub type SubsonicSuccessResponse = SubsonicResponse<Empty>;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Empty;
+
+// types::SubsonicResponseSubsonicResponse::SuccessResponse(response) => Ok(response),
+// types::SubsonicResponseSubsonicResponse::FailureResponse(failure) => Err(SubsonicError::Failure(failure)),
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum SubsonicResponseSubsonicResponse<T> {
+    SuccessResponse(SubsonicResponse<T>),
+    FailureResponse(SubsonicFailureResponse),
+}
+
 // TODO Account for additional OpenSubsonic fields?
 // And perhaps limit status to "ok" and "failed" Literals
 // Perhaps make a variant for ok and a variant for failed where failed 
 // can be all the different error codes
-#[derive(Serialize, Deserialize)]
-pub struct SubsonicResponse {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SubsonicResponse<T> {
     pub status: String,
     pub version: String,
-    pub error: Option<SubsonicError>
+    pub open_subsonic: Option<bool>,
+    pub server_version: Option<String>,
+    #[serde(rename = "type")]
+    pub type_: Option<String>,
+    #[serde(flatten)]
+    pub additional: T,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct PingResponse {
-    pub subsonic_response: SubsonicResponse
+    pub subsonic_response: SubsonicResponse<Empty>,
 }
 
 /// A work associated with a song.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Work {
     /// The work name.
@@ -35,7 +56,7 @@ pub struct Work {
 }
 
 /// A movement associated with a song.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Movement {
     /// The movement name.
@@ -47,7 +68,7 @@ pub struct Movement {
 }
 
 /// The replay gain data of a song.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReplayGain {
     /// The track replay gain value. (In Db)
@@ -67,7 +88,7 @@ pub struct ReplayGain {
 }
 
 /// A contributor artist for a or an album.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Contributor {
     /// The contributor role.
@@ -83,7 +104,7 @@ pub struct Contributor {
 }
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Song {
     pub id: String,
@@ -143,7 +164,7 @@ pub struct Song {
 }
 
 /// A disc title for an album, with an optional cover art.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscTitle {
     /// The disc number.
@@ -155,7 +176,7 @@ pub struct DiscTitle {
 }
 
 /// A date for a media item that may be just a year, or year-month, or full date.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ItemDate {
     /// The year
     year: Option<u16>,
@@ -166,14 +187,14 @@ pub struct ItemDate {
 }
 
 /// A record label for an album.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RecordLabel {
     /// The record label name.
     name: String
 }
 
 /// A genre in list of genres for an item
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ItemGenre {
     /// Genre name
     name: String
@@ -258,7 +279,7 @@ pub struct ItemGenre {
 ///     ]
 /// }
 /// ```
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbumID3 {
     /// The id of the album
@@ -345,7 +366,7 @@ pub struct AlbumID3 {
 ///   ]
 /// }
 /// ```
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistID3 {
     /// The id of the artist.
