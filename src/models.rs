@@ -1,4 +1,3 @@
-use crate::types::SubsonicFailureResponse;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
@@ -19,7 +18,7 @@ pub struct Empty;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum SubsonicResponseSubsonicResponse<T> {
     SuccessResponse(SubsonicResponse<T>),
-    FailureResponse(SubsonicFailureResponse),
+    // FailureResponse(SubsonicFailureResponse),
 }
 
 // TODO Account for additional OpenSubsonic fields?
