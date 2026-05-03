@@ -90,12 +90,51 @@ impl SubsonicParameters {
     }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Search3Parameters {
+    pub query: Box<str>,
+    pub artist_count: u32,
+    pub artist_offset: u32,
+    pub album_count: u32,
+    pub album_offset: u32,
+    pub song_count: u32,
+    pub song_offset: u32,
+    pub music_folder_id: Option<Box<str>>,
+}
+
+impl Search3Parameters {
+    pub fn query(query: &str) -> Self {
+        Self {
+            query: query.into(),
+            ..Default::default()
+        }
+    }
+}
+
+impl std::default::Default for Search3Parameters {
+    fn default() -> Self {
+        Self {
+            query: "".into(),
+            artist_count: 20,
+            artist_offset: 0,
+            album_count: 20,
+            album_offset: 0,
+            song_count: 20,
+            song_offset: 0,
+            music_folder_id: None
+        }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum SubsonicError {
     #[error("There was an error during an HTTP request")]
     ReqwestError(#[from] reqwest::Error),
     #[error("Deserialization of a response failed")]
     SerdeError(#[from] serde_json::Error),
+    #[error("The server returned a failed response")]
+    Failed, // TODO actually contain any data from the server
 }
 
 pub struct Client {
@@ -122,6 +161,23 @@ impl Client {
             .await?;
 
         Ok(response.json().await?)
+    }
+    pub async fn search3(&self, parameters: Search3Parameters) -> Result<SearchResult3, SubsonicError> {
+        let url = self.url.clone() + "/rest/search3.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        // TODO fix the type mess
+        let subsonic_response: SubsonicResponse<Search3Response> = response.json().await?;
+
+        if subsonic_response.subsonic_response.subsonic_response.status != "ok" {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_response.subsonic_response.search_result3)
     }
 }
 
@@ -164,5 +220,17 @@ mod tests {
 
         let ping_response = subsonic_client.ping().await.unwrap();
         assert_eq!(ping_response.subsonic_response.status, "ok", "{}", serde_json::to_string_pretty(&ping_response).unwrap());
+    }
+
+    #[tokio::test]
+    async fn search3() {
+        // For Subsonic
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+        let subsonic_client = Client::new(SUBSONIC.url, parameters);
+
+        let search3_response = subsonic_client.search3(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
+
+        assert_eq!(search3_response.album.len(), 1, "{}", serde_json::to_string_pretty(&search3_response).unwrap());
+        assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer", "{}", serde_json::to_string_pretty(&search3_response).unwrap());
     }
 }

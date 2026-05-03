@@ -7,18 +7,20 @@ pub struct SubsonicError {
     pub message: String
 }
 
-pub type SubsonicSuccessResponse = SubsonicResponse<Empty>;
+pub type PingResponse = SubsonicResponse<SubsonicResponseSubsonicResponse>;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Empty;
-
-// types::SubsonicResponseSubsonicResponse::SuccessResponse(response) => Ok(response),
-// types::SubsonicResponseSubsonicResponse::FailureResponse(failure) => Err(SubsonicError::Failure(failure)),
-
+/*
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum SubsonicResponseSubsonicResponse<T> {
     SuccessResponse(SubsonicResponse<T>),
     // FailureResponse(SubsonicFailureResponse),
+}
+*/
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub struct SubsonicResponse<T> {
+    pub subsonic_response: T,
 }
 
 // TODO Account for additional OpenSubsonic fields?
@@ -27,21 +29,31 @@ pub enum SubsonicResponseSubsonicResponse<T> {
 // can be all the different error codes
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SubsonicResponse<T> {
+pub struct SubsonicResponseSubsonicResponse {
     pub status: String,
     pub version: String,
     pub open_subsonic: Option<bool>,
     pub server_version: Option<String>,
     #[serde(rename = "type")]
     pub type_: Option<String>,
-    #[serde(flatten)]
-    pub additional: T,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PingResponse {
-    pub subsonic_response: SubsonicResponse<Empty>,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Search3Response {
+    #[serde(flatten)]
+    pub subsonic_response: SubsonicResponseSubsonicResponse,
+    #[serde(rename = "searchResult3")]
+    pub search_result3: SearchResult3,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SearchResult3 {
+    #[serde(default)]
+    pub artist: Vec<ArtistID3>,
+    #[serde(default)]
+    pub album: Vec<AlbumID3>,
+    #[serde(default)]
+    pub song: Vec<Song>,
 }
 
 /// A work associated with a song.
@@ -389,23 +401,3 @@ pub struct ArtistID3 {
     pub roles: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct SearchResult3 {
-    pub artist: Option<Vec<ArtistID3>>,
-    pub album: Option<Vec<AlbumID3>>,
-    pub song: Option<Vec<Song>>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SearchResult3SubsonicResponse {
-    pub status: String,
-    pub version: String,
-    pub search_result3: SearchResult3
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct SearchResult3Response {
-    pub subsonic_response: SearchResult3SubsonicResponse
-}
