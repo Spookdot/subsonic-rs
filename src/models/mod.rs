@@ -1,5 +1,8 @@
+mod subsonic_response;
+
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+pub use subsonic_response::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct SubsonicError {
@@ -7,43 +10,21 @@ pub struct SubsonicError {
     pub message: String
 }
 
-pub type PingResponse = SubsonicResponse<SubsonicResponseSubsonicResponse>;
-
-/*
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum SubsonicResponseSubsonicResponse<T> {
-    SuccessResponse(SubsonicResponse<T>),
-    // FailureResponse(SubsonicFailureResponse),
-}
-*/
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub struct SubsonicResponse<T> {
-    pub subsonic_response: T,
+pub struct BasicResponse {
+    pub subsonic_response: BasicData
 }
 
-// TODO Account for additional OpenSubsonic fields?
-// And perhaps limit status to "ok" and "failed" Literals
-// Perhaps make a variant for ok and a variant for failed where failed 
-// can be all the different error codes
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SubsonicResponseSubsonicResponse {
-    pub status: String,
-    pub version: String,
+pub struct BasicData {
+    pub status: Box<str>,
+    pub version: Box<str>,
     pub open_subsonic: Option<bool>,
-    pub server_version: Option<String>,
+    pub server_version: Option<Box<str>>,
     #[serde(rename = "type")]
-    pub type_: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Search3Response {
-    #[serde(flatten)]
-    pub subsonic_response: SubsonicResponseSubsonicResponse,
-    #[serde(rename = "searchResult3")]
-    pub search_result3: SearchResult3,
+    pub type_: Option<Box<str>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

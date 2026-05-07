@@ -4,6 +4,7 @@ use rand::{distr::Alphanumeric, prelude::*};
 use serde::Serialize;
 use thiserror::Error;
 use crate::models::*;
+use std::default::Default;
 
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
@@ -112,7 +113,7 @@ impl Search3Parameters {
     }
 }
 
-impl std::default::Default for Search3Parameters {
+impl Default for Search3Parameters {
     fn default() -> Self {
         Self {
             query: "".into(),
@@ -124,6 +125,33 @@ impl std::default::Default for Search3Parameters {
             song_offset: 0,
             music_folder_id: None
         }
+    }
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct StarParameters {
+    pub id: Option<Box<str>>,
+    pub album_id: Option<Box<str>>,
+    pub artist_id: Option<Box<str>>,
+}
+
+impl StarParameters {
+    pub fn new(id: Option<&str>, album_id: Option<&str>, artist_id: Option<&str>) -> Self {
+        Self {
+            id: Some(id.unwrap_or_default().into()),
+            album_id: Some(album_id.unwrap_or_default().into()),
+            artist_id: Some(artist_id.unwrap_or_default().into()),
+        }
+    }
+    pub fn id(id: &str) -> Self {
+        Self { id: Some(id.into()), ..Default::default() }
+    }
+    pub fn album_id(album_id: &str) -> Self {
+        Self { album_id: Some(album_id.into()), ..Default::default() }
+    }
+    pub fn artist_id(artist_id: &str) -> Self {
+        Self { artist_id: Some(artist_id.into()), ..Default::default() }
     }
 }
 
@@ -153,7 +181,7 @@ impl Client {
         }
     }
     /// Used to test the connectivity with the server.
-    pub async fn ping(&self) -> Result<PingResponse, SubsonicError> {
+    pub async fn ping(&self) -> Result<BasicResponse, SubsonicError> {
         let url = self.url.clone() + "/rest/ping.view";
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -171,13 +199,50 @@ impl Client {
             .await?;
 
         // TODO fix the type mess
-        let subsonic_response: SubsonicResponse<Search3Response> = response.json().await?;
+        let subsonic_response: SubsonicResponse<SearchResult3> = response.json().await?;
 
-        if subsonic_response.subsonic_response.subsonic_response.status != "ok" {
+        if subsonic_response.subsonic_response.status != "ok".into() {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.search_result3)
+        Ok(subsonic_response.subsonic_response.additional)
+    }
+    pub async fn star(&self, parameters: StarParameters) -> Result<BasicResponse, SubsonicError> {
+        let url =  self.url.clone() + "/rest/star.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        Ok(response.json().await?)
+    }
+    pub async fn unstar(&self, parameters: StarParameters) -> Result<BasicResponse, SubsonicError> {
+        let url =  self.url.clone() + "/rest/unstar.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        Ok(response.json().await?)
+    }
+    pub async fn get_song(&self, id: &str) -> Result<Song, SubsonicError> {
+        let url = self.url.clone() + "/rest/getSong.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("id", id)])
+            .send()
+            .await?;
+
+        // TODO fix the type mess
+        let subsonic_response: SubsonicResponse<Song> = response.json().await?;
+
+        if subsonic_response.subsonic_response.status != "ok".into() {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_response.subsonic_response.additional)
     }
 }
 
@@ -211,15 +276,16 @@ mod tests {
         let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
         let subsonic_client = Client::new(SUBSONIC.url, parameters);
 
-        let ping_response = subsonic_client.ping().await.unwrap();
-        assert_eq!(ping_response.subsonic_response.status, "ok", "{}", serde_json::to_string_pretty(&ping_response).unwrap());
+        let ping_response_result = subsonic_client.ping().await;
+        let ping_response = ping_response_result.unwrap();
+        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{}", serde_json::to_string_pretty(&ping_response).unwrap());
 
         // For Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
         let subsonic_client = Client::new(NAVIDROME.url, parameters);
 
         let ping_response = subsonic_client.ping().await.unwrap();
-        assert_eq!(ping_response.subsonic_response.status, "ok", "{}", serde_json::to_string_pretty(&ping_response).unwrap());
+        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{}", serde_json::to_string_pretty(&ping_response).unwrap());
     }
 
     #[tokio::test]
@@ -232,5 +298,97 @@ mod tests {
 
         assert_eq!(search3_response.album.len(), 1, "{}", serde_json::to_string_pretty(&search3_response).unwrap());
         assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer", "{}", serde_json::to_string_pretty(&search3_response).unwrap());
+    }
+
+    #[tokio::test]
+    async fn star_unstar_song() {
+        // Subsonic
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+        let client = Client::new(SUBSONIC.url, parameters);
+
+        // Search Song
+        let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
+
+        let song = search3_response.song[0].to_owned();
+        let song_id = song.id;
+        // Check if starred
+        if song.starred.is_some() {
+            // Unstar if starred
+            let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if unstarred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
+
+            // Star after unstarring
+            let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if starred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_some(), "Song should be starred after Star method was called");
+        } else {
+            // Star if unstarred
+            let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if starred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_some(), "Song should be starred after Star method was called");
+
+            // Unstar after starring
+            let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if unstarred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
+        }
+
+        // Navidrome
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+        let client = Client::new(NAVIDROME.url, parameters);
+
+        // Search Song
+        let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
+
+        let song = search3_response.song[0].to_owned();
+        let song_id = song.id;
+        // Check if starred
+        if song.starred.is_some() {
+            // Unstar if starred
+            let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if unstarred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
+
+            // Star after unstarring
+            let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if starred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_some(), "Song should be starred after Star method was called");
+        } else {
+            // Star if unstarred
+            let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if starred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_some(), "Song should be starred after Star method was called");
+
+            // Unstar after starring
+            let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+
+            // Check if unstarred
+            let song = client.get_song(&song_id).await.unwrap();
+            assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
+
+        }
     }
 }

@@ -1,0 +1,249 @@
+use serde::{Serialize, Deserialize, de::{self, Visitor}};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub struct SubsonicResponse<T> 
+{
+    pub subsonic_response: SubsonicData<T>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct SubsonicData<T> 
+{
+    pub status: Box<str>,
+    pub version: Box<str>,
+    pub open_subsonic: Option<bool>,
+    pub server_version: Option<Box<str>>,
+    pub type_: Option<Box<str>>,
+    pub additional: T,
+}
+
+impl<'de, T> Deserialize<'de> for SubsonicData<T> 
+where 
+    T: de::Deserialize<'de>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> 
+    {
+        enum Field { Status, Version, OpenSubsonic, ServerVersion, Type, Additional }
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de> 
+            {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("`status`, `version`, `openSubsonic`, `serverVersion`, `type` or any subsonic compatible field")
+                    }
+
+                    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+                        where
+                            E: serde::de::Error, 
+                    {
+                        match value {
+                            "status" => Ok(Field::Status),
+                            "version" => Ok(Field::Version),
+                            "openSubsonic" => Ok(Field::OpenSubsonic),
+                            "serverVersion" => Ok(Field::ServerVersion),
+                            "type" => Ok(Field::Type),
+                            _ => Ok(Field::Additional),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct FoobarVisitor<T> {
+            phantom: std::marker::PhantomData<T>
+        }
+
+        impl<'de, T> Visitor<'de> for FoobarVisitor<T>
+        where
+            T: de::Deserialize<'de>
+        {
+            type Value = SubsonicData<T>;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct Foobar")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+                where
+                    A: serde::de::MapAccess<'de>, 
+            {
+                let mut status = None;
+                let mut version = None;
+                let mut open_subsonic = None;
+                let mut server_version = None;
+                let mut type_ = None;
+                let mut additional = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Status => {
+                            if status.is_some() {
+                                return Err(de::Error::duplicate_field("status"));
+                            }
+                            status = Some(map.next_value()?);
+                        },
+                        Field::Version => {
+                            if version.is_some() {
+                                return Err(de::Error::duplicate_field("version"));
+                            }
+                            version = Some(map.next_value()?);
+                        },
+                        Field::OpenSubsonic => {
+                            if open_subsonic.is_some() {
+                                return Err(de::Error::duplicate_field("open_subsonic"));
+                            }
+                            open_subsonic = Some(map.next_value()?);
+                        },
+                        Field::ServerVersion => {
+                            if server_version.is_some() {
+                                return Err(de::Error::duplicate_field("server_version"));
+                            }
+                            server_version = Some(map.next_value()?);
+                        },
+                        Field::Type => {
+                            if type_.is_some() {
+                                return Err(de::Error::duplicate_field("type_"));
+                            }
+                            type_ = Some(map.next_value()?);
+                        },
+                        Field::Additional => {
+                            if additional.is_some() {
+                                return Err(de::Error::duplicate_field("additional"));
+                            }
+                            additional = Some(map.next_value()?);
+                        },
+                    }
+                }
+                let status = status.ok_or_else(|| de::Error::missing_field("status"))?;
+                let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
+                let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
+                Ok(SubsonicData { status, version, open_subsonic, server_version, type_, additional })
+            }
+        }
+
+        const FIELDS: &[&str] = &["status", "version", "openSubsonic", "serverVersion", "type", "*"];
+        deserializer.deserialize_struct("SubsonicData", FIELDS, FoobarVisitor { phantom: std::marker::PhantomData })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::*;
+
+    #[derive(Deserialize)]
+    struct Test {
+        text: Box<str>
+    }
+
+    #[test]
+    fn test() {
+        let data: SubsonicData<Test> = serde_json::from_str(r#"
+            {
+                "status": "ok",
+                "version": "1.16.1",
+                "test": {
+                    "text": "Hello World"
+                }
+            }
+        "#).unwrap();
+        assert_eq!(data.additional.text, "Hello World".into());
+    }
+
+    // #[test]
+    // fn ping() {
+    //     let data: SubsonicData<()> = serde_json::from_str(r#"
+    //         {
+    //             "status": "ok",
+    //             "version": "1.16.1"
+    //         }
+    //     "#).unwrap();
+    //     assert_eq!(data.version, "1.16.1".into());
+    // }
+
+    #[test]
+    fn search3() {
+        let data: SubsonicData<SearchResult3> = serde_json::from_str(r#"
+            {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "AwesomeServerName",
+    "serverVersion": "0.1.3 (tag)",
+    "openSubsonic": true,
+    "searchResult3": {
+      "artist": [
+        {
+          "id": "37ec820ca7193e17040c98f7da7c4b51",
+          "name": "2 Mello",
+          "coverArt": "ar-37ec820ca7193e17040c98f7da7c4b51_0",
+          "albumCount": 1,
+          "userRating": 5,
+          "artistImageUrl": "https://demo.org/image.jpg"
+        }
+      ],
+      "album": [
+        {
+          "id": "ad0f112b6dcf83de5e9cae85d07f0d35",
+          "name": "8-bit lagerfeuer",
+          "artist": "pornophonique",
+          "year": 2007,
+          "coverArt": "al-ad0f112b6dcf83de5e9cae85d07f0d35_640a93a8",
+          "starred": "2023-03-22T01:51:06Z",
+          "duration": 1954,
+          "playCount": 97,
+          "played": "2023-03-28T00:45:13Z",
+          "created": "2023-03-10T02:19:35.784818075Z",
+          "artistId": "91c3901ac465b9efc439e4be4270c2b6",
+          "userRating": 4,
+          "songCount": 8
+        }
+      ],
+      "song": [
+        {
+          "id": "082f435a363c32c57d5edb6a678a28d4",
+          "parent": "e8a0685e3f3ec6f251649af2b58b8617",
+          "isDir": false,
+          "title": "\"polar expedition\"",
+          "album": "Live at The Casbah - 2005-04-29",
+          "artist": "The New Deal",
+          "track": 4,
+          "year": 2005,
+          "coverArt": "mf-082f435a363c32c57d5edb6a678a28d4_6410b3ce",
+          "size": 19866778,
+          "contentType": "audio/flac",
+          "suffix": "flac",
+          "starred": "2023-03-27T09:45:27Z",
+          "duration": 178,
+          "bitRate": 880,
+          "bitDepth": 16,
+          "samplingRate": 44100,
+          "channelCount": 2,
+          "path": "The New Deal/Live at The Casbah - 2005-04-29/04 - \"polar expedition\".flac",
+          "playCount": 8,
+          "played": "2023-03-26T22:27:46Z",
+          "discNumber": 1,
+          "created": "2023-03-14T17:51:22.112827504Z",
+          "albumId": "e8a0685e3f3ec6f251649af2b58b8617",
+          "artistId": "97e0398acf63f9fb930d7d4ce209a52b",
+          "type": "music",
+          "isVideo": false
+        }
+      ]
+    }
+  }
+
+        "#).unwrap();
+        assert_eq!(data.additional.artist[0].id, "37ec820ca7193e17040c98f7da7c4b51");
+    }
+}
