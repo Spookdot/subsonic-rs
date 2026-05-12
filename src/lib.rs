@@ -163,6 +163,8 @@ pub enum SubsonicError {
     SerdeError(#[from] serde_json::Error),
     #[error("The server returned a failed response")]
     Failed, // TODO actually contain any data from the server
+    #[error("Deserialization failed at {url} for {body}")]
+    Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
 }
 
 pub struct Client {
@@ -176,6 +178,13 @@ impl Client {
     pub fn new(url: &str, parameters: SubsonicParameters) -> Self {
         Self {
             client: reqwest::Client::new(),
+            url: url.to_owned(),
+            parameters,
+        }
+    }
+    pub fn with_client(client: reqwest::Client, url: &str, parameters: SubsonicParameters) -> Self {
+        Self {
+            client,
             url: url.to_owned(),
             parameters,
         }
@@ -199,7 +208,14 @@ impl Client {
             .await?;
 
         // TODO fix the type mess
-        let subsonic_response: SubsonicResponse<SearchResult3> = response.json().await?;
+        let url = response.url().to_owned();
+        let response_text = response.text().await?;
+        let subsonic_response: SubsonicResponse<SearchResult3> = match serde_json::from_str(&response_text) {
+            Ok(success) => success,
+            Err(error) => {
+                return Err(SubsonicError::Deserialization { url: url.as_str().into(), body: response_text.into(), serde_error: error });
+            }
+        };
 
         if subsonic_response.subsonic_response.status != "ok".into() {
             return Err(SubsonicError::Failed);

@@ -117,7 +117,7 @@ pub struct Song {
     pub duration: Option<u32>,
     pub bit_rate: Option<u16>,
     pub bit_depth: Option<u8>,
-    pub sampling_rate: Option<u16>,
+    pub sampling_rate: Option<u32>,
     pub channel_count: Option<u8>,
     pub path: Option<String>,
     pub is_video: Option<bool>,
