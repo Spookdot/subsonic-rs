@@ -28,6 +28,18 @@ pub struct BasicData {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct License {
+    pub valid: bool,
+    #[serde(default)]
+    pub email: Box<str>,
+    #[serde(default)]
+    pub license_expires: Box<str>,
+    #[serde(default)]
+    pub trial_expires: Box<str>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SearchResult3 {
     #[serde(default)]
     pub artist: Vec<ArtistID3>,

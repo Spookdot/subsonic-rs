@@ -199,6 +199,22 @@ impl Client {
 
         Ok(response.json().await?)
     }
+    pub async fn get_license(&self) -> Result<License, SubsonicError> {
+        let url = self.url.clone() + "/rest/getLicense.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .send()
+            .await?;
+
+        
+        let subsonic_response: SubsonicResponse<License> = response.json().await?;
+
+        if subsonic_response.subsonic_response.status != "ok".into() {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_response.subsonic_response.additional)
+    }
     pub async fn search3(&self, parameters: Search3Parameters) -> Result<SearchResult3, SubsonicError> {
         let url = self.url.clone() + "/rest/search3.view";
         let response = self.client.get(url)
@@ -294,14 +310,31 @@ mod tests {
 
         let ping_response_result = subsonic_client.ping().await;
         let ping_response = ping_response_result.unwrap();
-        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{}", serde_json::to_string_pretty(&ping_response).unwrap());
+        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{:#?}", ping_response);
 
         // For Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
         let subsonic_client = Client::new(NAVIDROME.url, parameters);
 
         let ping_response = subsonic_client.ping().await.unwrap();
-        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{}", serde_json::to_string_pretty(&ping_response).unwrap());
+        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{:#?}", ping_response);
+    }
+
+    #[tokio::test]
+    async fn get_license() {
+        // For Subsonic
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+        let subsonic_client = Client::new(SUBSONIC.url, parameters);
+
+        let license = subsonic_client.get_license().await.unwrap();
+        assert!(license.valid, "{:#?}", license);
+
+        // For Navidrome
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+        let subsonic_client = Client::new(NAVIDROME.url, parameters);
+
+        let license = subsonic_client.get_license().await.unwrap();
+        assert!(license.valid, "{:#?}", license);
     }
 
     #[tokio::test]
@@ -312,8 +345,8 @@ mod tests {
 
         let search3_response = subsonic_client.search3(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
 
-        assert_eq!(search3_response.album.len(), 1, "{}", serde_json::to_string_pretty(&search3_response).unwrap());
-        assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer", "{}", serde_json::to_string_pretty(&search3_response).unwrap());
+        assert_eq!(search3_response.album.len(), 1, "{:#?}", search3_response);
+        assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer", "{:#?}", search3_response);
     }
 
     #[tokio::test]
