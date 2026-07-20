@@ -139,9 +139,9 @@ pub struct StarParameters {
 impl StarParameters {
     pub fn new(id: Option<&str>, album_id: Option<&str>, artist_id: Option<&str>) -> Self {
         Self {
-            id: Some(id.unwrap_or_default().into()),
-            album_id: Some(album_id.unwrap_or_default().into()),
-            artist_id: Some(artist_id.unwrap_or_default().into()),
+            id: id.map(Into::into),
+            album_id: album_id.map(Into::into),
+            artist_id: artist_id.map(Into::into),
         }
     }
     pub fn id(id: &str) -> Self {
