@@ -155,6 +155,30 @@ impl StarParameters {
     }
 }
 
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct GetLyricsParameters {
+    /// The artist name.
+    pub artist: Option<Box<str>>,
+    /// The song title.
+    pub title: Option<Box<str>>,
+}
+
+impl GetLyricsParameters {
+    pub fn new(artist: &str, title: &str) -> Self {
+        Self {
+            artist: Some(artist.into()),
+            title: Some(title.into()),
+        }
+    }
+    pub fn title(title: &str) -> Self {
+        Self { title: Some(title.into()), ..Default::default() }
+    }
+    pub fn artist(artist: &str) -> Self {
+        Self { artist: Some(artist.into()), ..Default::default() }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum SubsonicError {
     #[error("There was an error during an HTTP request")]
@@ -269,6 +293,24 @@ impl Client {
 
         // TODO fix the type mess
         let subsonic_response: SubsonicResponse<Song> = response.json().await?;
+
+        if subsonic_response.subsonic_response.status != "ok".into() {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_response.subsonic_response.additional)
+    }
+    pub async fn get_lyrics(&self, parameters: GetLyricsParameters) -> Result<Lyrics, SubsonicError> {
+        // TODO Add Tests
+        let url = self.url.clone() + "/rest/getLyrics.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        
+        let subsonic_response: SubsonicResponse<Lyrics> = response.json().await?;
 
         if subsonic_response.subsonic_response.status != "ok".into() {
             return Err(SubsonicError::Failed);
@@ -439,5 +481,45 @@ mod tests {
             assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
 
         }
+    }
+
+    #[tokio::test]
+    async fn get_lyrics() {
+        // TODO can't seem to get a response for any of these combinations
+        // For Subsonic
+        // let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+        // let subsonic_client = Client::new(SUBSONIC.url, parameters);
+
+        // Title Only
+        // let get_lyrics_parameters = GetLyricsParameters::title("");
+        // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
+
+        // Artist Only
+        // let get_lyrics_parameters = GetLyricsParameters::artist("");
+        // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
+
+        // Title and Artist
+        // let get_lyrics_parameters = GetLyricsParameters::new("", "");
+        // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
+
+        // For Navidrome
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+        let subsonic_client = Client::new(NAVIDROME.url, parameters);
+
+        // TODO can't seem to get a response for title only and artist only
+        // Title Only
+        // let get_lyrics_parameters = GetLyricsParameters::title("");
+        // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
+
+        // Artist Only
+        // let get_lyrics_parameters = GetLyricsParameters::artist("");
+        // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
+
+        // Title and Artist
+        let get_lyrics_parameters = GetLyricsParameters::new("Nine Inch Nails", "Letting You");
+        let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
+        assert_eq!(get_lyrics_response.title, "Letting You".into(), "The titles don't match for Navidrome Title and Artist");
+        assert_eq!(get_lyrics_response.artist, "Nine Inch Nails".into(), "The artists don't match for Navidrome Title and Artist");
+        assert!(!get_lyrics_response.value.is_empty(), "Lyrics should not be empty for Navidrome Title and Artist");
     }
 }

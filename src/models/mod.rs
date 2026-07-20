@@ -29,6 +29,19 @@ pub struct BasicData {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct Lyrics {
+    /// The lyrics
+    pub value: Box<str>,
+    /// The artist name
+    #[serde(default)]
+    pub artist: Box<str>,
+    /// The song title
+    #[serde(default)]
+    pub title: Box<str>
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct License {
     pub valid: bool,
     #[serde(default)]
