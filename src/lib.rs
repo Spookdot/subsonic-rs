@@ -153,6 +153,13 @@ impl StarParameters {
     pub fn artist_id(artist_id: &str) -> Self {
         Self { artist_id: Some(artist_id.into()), ..Default::default() }
     }
+    pub fn all(id: &str, album_id: &str, artist_id: &str) -> Self {
+        Self {
+            id: Some(id.into()),
+            album_id: Some(album_id.into()),
+            artist_id: Some(artist_id.into()),
+        }
+    }
 }
 
 #[derive(Serialize, Default)]
