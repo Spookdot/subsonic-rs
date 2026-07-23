@@ -137,7 +137,7 @@ impl<T> Client<T> {
     }
     /// Used to test the connectivity with the server.
     pub async fn ping(&self) -> Result<BasicResponse, SubsonicError> {
-        let url = self.url.clone() + "/rest/ping.view";
+        let url = format!("{}/rest/ping.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .send()
@@ -162,7 +162,7 @@ impl<T> Client<T> {
         Ok(subsonic_response.subsonic_response.additional)
     }
     pub async fn search3(&self, parameters: Search3Parameters) -> Result<SearchResult3, SubsonicError> {
-        let url = self.url.clone() + "/rest/search3.view";
+        let url = format!("{}/rest/search3.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&parameters)
@@ -179,14 +179,14 @@ impl<T> Client<T> {
             }
         };
 
-        if subsonic_response.subsonic_response.status != "ok".into() {
+        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
         Ok(subsonic_response.subsonic_response.additional)
     }
     pub async fn star(&self, parameters: StarParameters) -> Result<BasicResponse, SubsonicError> {
-        let url =  self.url.clone() + "/rest/star.view";
+        let url =  format!("{}/rest/star.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&parameters)
@@ -196,7 +196,7 @@ impl<T> Client<T> {
         Ok(response.json().await?)
     }
     pub async fn unstar(&self, parameters: StarParameters) -> Result<BasicResponse, SubsonicError> {
-        let url =  self.url.clone() + "/rest/unstar.view";
+        let url =  format!("{}/rest/unstar.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&parameters)
@@ -206,7 +206,7 @@ impl<T> Client<T> {
         Ok(response.json().await?)
     }
     pub async fn get_song(&self, id: &str) -> Result<Song, SubsonicError> {
-        let url = self.url.clone() + "/rest/getSong.view";
+        let url = format!("{}/rest/getSong.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&[("id", id)])
@@ -216,14 +216,14 @@ impl<T> Client<T> {
         // TODO fix the type mess
         let subsonic_response: SubsonicResponse<Song> = response.json().await?;
 
-        if subsonic_response.subsonic_response.status != "ok".into() {
+        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
         Ok(subsonic_response.subsonic_response.additional)
     }
     pub async fn get_lyrics(&self, parameters: GetLyricsParameters) -> Result<Lyrics, SubsonicError> {
-        let url = self.url.clone() + "/rest/getLyrics.view";
+        let url = format!("{}/rest/getLyrics.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&parameters)
@@ -233,7 +233,7 @@ impl<T> Client<T> {
         
         let subsonic_response: SubsonicResponse<Lyrics> = response.json().await?;
 
-        if subsonic_response.subsonic_response.status != "ok".into() {
+        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
@@ -245,7 +245,7 @@ impl Client<OpenSubsonic> {
     pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError> {
         // TODO write Tests
         // TODO account for OpenSubsonic Servers that don't implement the Extension
-        let url = self.url.clone() + "/rest/getLyricsBySongId.view";
+        let url = format!("{}/rest/getLyricsBySongId.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&[("id", id)])
@@ -255,7 +255,7 @@ impl Client<OpenSubsonic> {
         
         let subsonic_response: SubsonicResponse<LyricsList> = response.json().await?;
 
-        if subsonic_response.subsonic_response.status != "ok".into() {
+        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
@@ -264,7 +264,7 @@ impl Client<OpenSubsonic> {
     pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError> {
         // TODO write Tests
         // TODO account for OpenSubsonic Servers that don't implement the Extension
-        let url = self.url.clone() + "/rest/getLyricsBySongId.view";
+        let url = format!("{}/rest/getLyricsBySongId.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .query(&[("id", id), ("enhanced", "true")])
@@ -274,7 +274,7 @@ impl Client<OpenSubsonic> {
         
         let subsonic_response: SubsonicResponse<EnhancedLyricsList> = response.json().await?;
 
-        if subsonic_response.subsonic_response.status != "ok".into() {
+        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
@@ -314,14 +314,14 @@ mod tests {
 
         let ping_response_result = subsonic_client.ping().await;
         let ping_response = ping_response_result.unwrap();
-        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{:#?}", ping_response);
+        assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
 
         // For Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
         let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
         let ping_response = subsonic_client.ping().await.unwrap();
-        assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{:#?}", ping_response);
+        assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
     }
 
     #[tokio::test]
@@ -368,7 +368,7 @@ mod tests {
         if song.starred.is_some() {
             // Unstar if starred
             let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if unstarred
             let song = client.get_song(&song_id).await.unwrap();
@@ -376,7 +376,7 @@ mod tests {
 
             // Star after unstarring
             let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if starred
             let song = client.get_song(&song_id).await.unwrap();
@@ -384,7 +384,7 @@ mod tests {
         } else {
             // Star if unstarred
             let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if starred
             let song = client.get_song(&song_id).await.unwrap();
@@ -392,7 +392,7 @@ mod tests {
 
             // Unstar after starring
             let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if unstarred
             let song = client.get_song(&song_id).await.unwrap();
@@ -412,7 +412,7 @@ mod tests {
         if song.starred.is_some() {
             // Unstar if starred
             let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if unstarred
             let song = client.get_song(&song_id).await.unwrap();
@@ -420,7 +420,7 @@ mod tests {
 
             // Star after unstarring
             let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if starred
             let song = client.get_song(&song_id).await.unwrap();
@@ -428,7 +428,7 @@ mod tests {
         } else {
             // Star if unstarred
             let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if starred
             let song = client.get_song(&song_id).await.unwrap();
@@ -436,7 +436,7 @@ mod tests {
 
             // Unstar after starring
             let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
-            assert_eq!(starred_response.subsonic_response.status, "ok".into());
+            assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
             // Check if unstarred
             let song = client.get_song(&song_id).await.unwrap();
