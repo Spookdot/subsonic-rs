@@ -1,10 +1,11 @@
 pub mod models;
+pub mod parameters;
 
 use rand::{distr::Alphanumeric, prelude::*};
 use serde::Serialize;
 use thiserror::Error;
 use crate::models::*;
-use std::default::Default;
+use crate::parameters::*;
 
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
@@ -91,100 +92,6 @@ impl SubsonicParameters {
     }
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Search3Parameters {
-    pub query: Box<str>,
-    pub artist_count: u32,
-    pub artist_offset: u32,
-    pub album_count: u32,
-    pub album_offset: u32,
-    pub song_count: u32,
-    pub song_offset: u32,
-    pub music_folder_id: Option<Box<str>>,
-}
-
-impl Search3Parameters {
-    pub fn query(query: &str) -> Self {
-        Self {
-            query: query.into(),
-            ..Default::default()
-        }
-    }
-}
-
-impl Default for Search3Parameters {
-    fn default() -> Self {
-        Self {
-            query: "".into(),
-            artist_count: 20,
-            artist_offset: 0,
-            album_count: 20,
-            album_offset: 0,
-            song_count: 20,
-            song_offset: 0,
-            music_folder_id: None
-        }
-    }
-}
-
-#[derive(Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct StarParameters {
-    pub id: Option<Box<str>>,
-    pub album_id: Option<Box<str>>,
-    pub artist_id: Option<Box<str>>,
-}
-
-impl StarParameters {
-    pub fn new(id: Option<&str>, album_id: Option<&str>, artist_id: Option<&str>) -> Self {
-        Self {
-            id: id.map(Into::into),
-            album_id: album_id.map(Into::into),
-            artist_id: artist_id.map(Into::into),
-        }
-    }
-    pub fn id(id: &str) -> Self {
-        Self { id: Some(id.into()), ..Default::default() }
-    }
-    pub fn album_id(album_id: &str) -> Self {
-        Self { album_id: Some(album_id.into()), ..Default::default() }
-    }
-    pub fn artist_id(artist_id: &str) -> Self {
-        Self { artist_id: Some(artist_id.into()), ..Default::default() }
-    }
-    pub fn all(id: &str, album_id: &str, artist_id: &str) -> Self {
-        Self {
-            id: Some(id.into()),
-            album_id: Some(album_id.into()),
-            artist_id: Some(artist_id.into()),
-        }
-    }
-}
-
-#[derive(Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetLyricsParameters {
-    /// The artist name.
-    pub artist: Option<Box<str>>,
-    /// The song title.
-    pub title: Option<Box<str>>,
-}
-
-impl GetLyricsParameters {
-    pub fn new(artist: &str, title: &str) -> Self {
-        Self {
-            artist: Some(artist.into()),
-            title: Some(title.into()),
-        }
-    }
-    pub fn title(title: &str) -> Self {
-        Self { title: Some(title.into()), ..Default::default() }
-    }
-    pub fn artist(artist: &str) -> Self {
-        Self { artist: Some(artist.into()), ..Default::default() }
-    }
-}
 
 #[derive(Error, Debug)]
 pub enum SubsonicError {
@@ -231,7 +138,7 @@ impl Client {
         Ok(response.json().await?)
     }
     pub async fn get_license(&self) -> Result<License, SubsonicError> {
-        let url = self.url.clone() + "/rest/getLicense.view";
+        let url = format!("{}/rest/getLicense.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .send()
@@ -240,7 +147,7 @@ impl Client {
         
         let subsonic_response: SubsonicResponse<License> = response.json().await?;
 
-        if subsonic_response.subsonic_response.status != "ok".into() {
+        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
@@ -308,7 +215,6 @@ impl Client {
         Ok(subsonic_response.subsonic_response.additional)
     }
     pub async fn get_lyrics(&self, parameters: GetLyricsParameters) -> Result<Lyrics, SubsonicError> {
-        // TODO Add Tests
         let url = self.url.clone() + "/rest/getLyrics.view";
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -318,6 +224,44 @@ impl Client {
 
         
         let subsonic_response: SubsonicResponse<Lyrics> = response.json().await?;
+
+        if subsonic_response.subsonic_response.status != "ok".into() {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_response.subsonic_response.additional)
+    }
+    pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError> {
+        // TODO write Tests
+        // TODO account for Subsonic Servers
+        let url = self.url.clone() + "/rest/getLyricsBySongId.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("id", id)])
+            .send()
+            .await?;
+
+        
+        let subsonic_response: SubsonicResponse<LyricsList> = response.json().await?;
+
+        if subsonic_response.subsonic_response.status != "ok".into() {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_response.subsonic_response.additional)
+    }
+    pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError> {
+        // TODO write Tests
+        // TODO account for Subsonic Servers
+        let url = self.url.clone() + "/rest/getLyricsBySongId.view";
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("id", id), ("enhanced", "true")])
+            .send()
+            .await?;
+
+        
+        let subsonic_response: SubsonicResponse<EnhancedLyricsList> = response.json().await?;
 
         if subsonic_response.subsonic_response.status != "ok".into() {
             return Err(SubsonicError::Failed);
@@ -344,7 +288,7 @@ mod tests {
         password: "demo" 
     };
 
-    // Subsonic Demo
+    // Subsonic DemoI am
     const SUBSONIC: SubsonicLogin = SubsonicLogin { 
         url: "http://demo.subsonic.org", 
         username: "guest4", 

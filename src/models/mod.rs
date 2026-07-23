@@ -27,6 +27,188 @@ pub struct BasicData {
     pub type_: Option<Box<str>>,
 }
 
+/// A word or syllable cue within a cueLine.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase" )]
+pub struct Cue {
+    /// Start time in milliseconds
+    pub start: u32,
+    /// End time in milliseconds. Within a `cueLine`, `end` **must** be either present on **all** cues or **none**. 
+    /// When the source provides partial end times, servers **must** fill missing values (e.g., using the next cue’s `start`, or the cueLine’s `end` for the final cue). 
+    /// When no cues have end times (e.g., Enhanced LRC with start-only timing), `end` is omitted from all cues. 
+    /// This is a documented contract rule; the OpenAPI schema does not enforce the all-or-none shape structurally
+    #[serde(default)]
+    pub end: u32,
+    /// Zero-based inclusive UTF-8 byte offset into the parent `cueLine.value` where this cue begins
+    pub byte_start: u32,
+    /// Zero-based inclusive UTF-8 byte offset into the parent `cueLine.value` where this cue ends
+    pub byte_end: u32,
+    /// The text of this word or syllable
+    pub value: Box<str>
+}
+
+
+/// Word/syllable-level timing data for a lyrics line or agent layer.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase" )]
+pub struct CueLine {
+    /// Zero-based index into the parent `line` array this cueLine corresponds to
+    pub index: u32,
+    /// Start time in milliseconds (may differ from the parent line if cues are more precise)
+    #[serde(default)]
+    pub start: u32,
+    /// End time in milliseconds
+    #[serde(default)]
+    pub end: u32,
+    /// Full text for this cueLine. 
+    /// When agent attribution splits one parent line into multiple cueLines, this is the text for that cueLine’s agent/layer, not necessarily the parent line’s combined text. 
+    /// Required because every nested `cue` defines `byteStart` / `byteEnd` against this exact final UTF-8 string
+    pub value: Box<str>,
+    /// Opaque identifier referencing an `agent` in the same `structuredLyrics` entry. 
+    /// If the parent `structuredLyrics` entry includes `agents`, every cueLine in that entry **must** include `agentId`, and the value **must** match exactly one `agents[].id` in that entry. 
+    /// If the parent entry does not include `agents`, cueLines **must not** include `agentId`. 
+    /// When multiple cueLines share the same `index`, the cueLine whose referenced agent has `role: "main"` **must** come first
+    pub argent_id: Option<Box<str>>,
+    /// Ordered list of word/syllable cues. Every cue **must** include `byteStart` / `byteEnd` offsets into `value`
+    pub cue: Vec<Cue>,
+}
+
+/// Semantic vocal-layer classification for cueLines that reference an agent.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase" )]
+pub enum AgentRole {
+    /// Lead/default vocal layer
+    Main,
+    /// Additional explicit individual voice part
+    Voice,
+    /// Background vocals
+    Bg,
+    /// Group/chorus vocals
+    Group
+}
+
+/// Reusable metadata for a vocal agent within a structuredLyrics entry.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Agent {
+    /// Opaque identifier for this agent. The value is only meaningful within the parent `structuredLyrics` entry and **must** be unique within that entry
+    pub id: Box<str>,
+    /// Semantic vocal-layer classification for cueLines that reference this agent. 
+    /// One of: 
+    /// `main` (lead/default vocal layer), 
+    /// `voice` (additional explicit individual voice part), 
+    /// `bg` (background vocals), 
+    /// `group` (group/chorus vocals). 
+    /// When a structuredLyrics entry uses agents for cue-attributed lyrics, it **must** define exactly one main agent
+    pub role: AgentRole,
+    /// Optional human-readable label for this agent, such as a singer or character name from the source metadata
+    pub name: Option<Box<str>>,
+}
+
+/// One line of a song lyric.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Line {
+    /// The start time of the lyrics, relative to the start time of the track, in milliseconds. If this is not part of synced lyrics, start **must** be omitted
+    #[serde(default)]
+    pub start: u32,
+    /// The actual text of this line
+    pub value: Box<str>,
+}
+
+/// The primary lyric-layer classification for a `structuredLyrics` entry.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase" )]
+pub enum StructuredLyricsKind {
+    /// Primary vocals for this entry, default if omitted
+    Main, 
+    /// A translation of another lyric layer into another language
+    Translation, 
+    /// A phonetic/romanized rendering, e.g. romaji for Japanese, pinyin for Chinese
+    Pronunciation,
+}
+
+/// Structured lyrics.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnhancedStructuredLyrics {
+    /// The lyrics language (ideally ISO 639). If the language is unknown (e.g. lrc file), the server **must** return `und` (ISO standard) or `xxx` (common value for taggers)
+    pub lang: Box<str>,
+    /// True if the lyrics are synced, false otherwise
+    pub synced: bool,
+    /// The actual lyrics. Ordered by start time (synced) or appearance order (unsynced)
+    pub line: Vec<Line>,
+    /// The artist name to display. This could be the localized name, or any other value
+    pub display_artist: Option<Box<str>>,
+    /// The title to display. This could be the song title (localized), or any other value
+    pub display_title: Option<Box<str>>,
+    /// The offset to apply to all lyrics, in milliseconds. Positive means lyrics appear sooner, negative means later. If not included, the offset **must** be assumed to be 0
+    #[serde(default)]
+    pub offset: i32,
+    /// Reusable per-track attribution metadata for `cueLine` entries. 
+    /// When present, **must** contain at least one entry, and each `agents[].id` **must** be unique within this `structuredLyrics` entry. 
+    /// `agents` are optional for simple unattributed single-layer lyrics. 
+    /// When a `structuredLyrics` entry represents multiple vocal agents/layers, it **must** include `agents`; 
+    /// a single-agent attributed/default entry may also include `agents`, and if it does, exactly one agent **must** use `role: "main"`. 
+    /// `agents` should not be emitted without `cueLine` data
+    #[serde(default)]
+    pub agents: Vec<Agent>,
+    /// The primary lyric-layer classification for this `structuredLyrics` entry. 
+    /// One of: 
+    /// `main` (primary vocals for this entry, default if omitted), 
+    /// `translation` (a translation of another lyric layer into another language), 
+    /// `pronunciation` (a phonetic/romanized rendering, e.g. romaji for Japanese, pinyin for Chinese). 
+    /// Tracks are independent across `kind` values; clients should not assume 1:1 line or cue alignment between entries. Only returned when `enhanced=true`. Added in `songLyrics` version 2
+    pub kind: Option<StructuredLyricsKind>,
+    /// Word/syllable-level timing data. 
+    /// Each cueLine corresponds to a `line` by its `index` field. 
+    /// Every cueLine **must** include `value`, and every nested cue **must** include `byteStart` / `byteEnd` offsets into that exact string. 
+    /// If `agents` is present, every cueLine in the entry **must** include `agentId`; 
+    /// if `agents` is absent, cueLines **must not** include `agentId`. 
+    /// Only returned when `enhanced=true` and `synced` is `true`. 
+    /// Added in `songLyrics` version 2
+    pub cue_line: Vec<CueLine>,
+}
+
+/// List of structured lyrics.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnhancedLyricsList {
+    /// Structured lyrics. There can be multiple lyrics of the same type with the same language
+    #[serde(default)]
+    pub structured_lyrics: Vec<EnhancedStructuredLyrics>,
+}
+
+/// Structured lyrics.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct StructuredLyrics {
+    /// The lyrics language (ideally ISO 639). If the language is unknown (e.g. lrc file), the server **must** return `und` (ISO standard) or `xxx` (common value for taggers)
+    pub lang: Box<str>,
+    /// True if the lyrics are synced, false otherwise
+    pub synced: bool,
+    /// The actual lyrics. Ordered by start time (synced) or appearance order (unsynced)
+    pub line: Vec<Line>,
+    /// The artist name to display. This could be the localized name, or any other value
+    pub display_artist: Option<Box<str>>,
+    /// The title to display. This could be the song title (localized), or any other value
+    pub display_title: Option<Box<str>>,
+    /// The offset to apply to all lyrics, in milliseconds. Positive means lyrics appear sooner, negative means later. If not included, the offset **must** be assumed to be 0
+    #[serde(default)]
+    pub offset: u32,
+    /// Reusable per-track attribution metadata for `cueLine` entries. When present, **must** contain at least one entry, and each `agents[].id` **must** be unique within this `structuredLyrics` entry. `agents` are optional for simple unattributed single-layer lyrics. When a `structuredLyrics` entry represents multiple vocal agents/layers, it **must** include `agents`; a single-agent attributed/default entry may also include `agents`, and if it does, exactly one agent **must** use `role: "main"`. `agents` should not be emitted without `cueLine` data
+    #[serde(default)]
+    pub agents: Vec<Agent>,
+}
+
+/// List of structured lyrics.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LyricsList {
+    /// Structured lyrics. There can be multiple lyrics of the same type with the same language
+    #[serde(default)]
+    pub structured_lyrics: Vec<StructuredLyrics>,
+}
+
+/// Lyrics.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Lyrics {
