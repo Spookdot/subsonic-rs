@@ -12,19 +12,32 @@ pub struct SubsonicError {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub struct BasicResponse {
-    pub subsonic_response: BasicData
+pub struct SubsonicBasicResponse {
+    pub subsonic_response: SubsonicBasicData
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BasicData {
+pub struct SubsonicBasicData {
     pub status: Box<str>,
     pub version: Box<str>,
-    pub open_subsonic: Option<bool>,
-    pub server_version: Option<Box<str>>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub struct OpenSubsonicBasicResponse {
+    pub subsonic_response: OpenSubsonicBasicData
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenSubsonicBasicData {
+    pub status: Box<str>,
+    pub version: Box<str>,
+    pub open_subsonic: bool,
+    pub server_version: Box<str>,
     #[serde(rename = "type")]
-    pub type_: Option<Box<str>>,
+    pub type_: Box<str>,
 }
 
 /// A word or syllable cue within a cueLine.

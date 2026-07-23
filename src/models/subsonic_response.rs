@@ -1,5 +1,19 @@
 use serde::{Serialize, Deserialize, de::{self, Visitor}};
 
+// TODO rename Trait
+pub trait SubsonicResponseTrait<T> {
+    fn subsonic_response(&self) -> &impl SubsonicDataTrait<T>;
+    fn into_subsonic_data(self) -> impl SubsonicDataTrait<T>;
+}
+
+// TODO rename Trait
+pub trait SubsonicDataTrait<T> {
+    fn status(&self) -> &str;
+    fn version(&self) -> &str;
+    fn additional(&self) -> &T;
+    fn into_additional(self) -> T;
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsonicResponse<T> 
@@ -7,18 +21,179 @@ pub struct SubsonicResponse<T>
     pub subsonic_response: SubsonicData<T>,
 }
 
+#[allow(refining_impl_trait)]
+impl<T> SubsonicResponseTrait<T> for SubsonicResponse<T> {
+    fn subsonic_response(&self) -> &SubsonicData<T> {
+        &self.subsonic_response
+    }
+
+    fn into_subsonic_data(self) -> SubsonicData<T> {
+       self.subsonic_response 
+    }
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct SubsonicData<T> 
 {
     pub status: Box<str>,
     pub version: Box<str>,
-    pub open_subsonic: Option<bool>,
-    pub server_version: Option<Box<str>>,
-    pub type_: Option<Box<str>>,
     pub additional: T,
 }
 
+impl<T> SubsonicDataTrait<T> for SubsonicData<T> {
+    fn status(&self) -> &str {
+        &self.status
+    }
+    fn version(&self) -> &str {
+        &self.version
+    }
+    fn additional(&self) -> &T {
+        &self.additional
+    }
+    fn into_additional(self) -> T {
+        self.additional
+    }
+}
+
 impl<'de, T> Deserialize<'de> for SubsonicData<T> 
+where 
+    T: de::Deserialize<'de>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> 
+    {
+        enum Field { Status, Version, Additional }
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de> 
+            {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("`status`, `version`, or any subsonic compatible field")
+                    }
+
+                    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+                        where
+                            E: serde::de::Error, 
+                    {
+                        match value {
+                            "status" => Ok(Field::Status),
+                            "version" => Ok(Field::Version),
+                            _ => Ok(Field::Additional),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct FoobarVisitor<T> {
+            phantom: std::marker::PhantomData<T>
+        }
+
+        impl<'de, T> Visitor<'de> for FoobarVisitor<T>
+        where
+            T: de::Deserialize<'de>
+        {
+            type Value = SubsonicData<T>;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct Foobar")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+                where
+                    A: serde::de::MapAccess<'de>, 
+            {
+                let mut status = None;
+                let mut version = None;
+                let mut additional = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Status => {
+                            if status.is_some() {
+                                return Err(de::Error::duplicate_field("status"));
+                            }
+                            status = Some(map.next_value()?);
+                        },
+                        Field::Version => {
+                            if version.is_some() {
+                                return Err(de::Error::duplicate_field("version"));
+                            }
+                            version = Some(map.next_value()?);
+                        },
+                        Field::Additional => {
+                            if additional.is_some() {
+                                return Err(de::Error::duplicate_field("additional"));
+                            }
+                            additional = Some(map.next_value()?);
+                        },
+                    }
+                }
+                let status = status.ok_or_else(|| de::Error::missing_field("status"))?;
+                let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
+                let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
+                Ok(SubsonicData { status, version, additional })
+            }
+        }
+
+        const FIELDS: &[&str] = &["status", "version", "*"];
+        deserializer.deserialize_struct("SubsonicData", FIELDS, FoobarVisitor { phantom: std::marker::PhantomData })
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub struct OpenSubsonicResponse<T> 
+{
+    pub subsonic_response: OpenSubsonicData<T>,
+}
+
+#[allow(refining_impl_trait)]
+impl<T> SubsonicResponseTrait<T> for OpenSubsonicResponse<T> {
+    fn subsonic_response(&self) -> &OpenSubsonicData<T> {
+        &self.subsonic_response
+    }
+    fn into_subsonic_data(self) -> OpenSubsonicData<T> {
+        self.subsonic_response
+    }
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct OpenSubsonicData<T> 
+{
+    pub status: Box<str>,
+    pub version: Box<str>,
+    pub open_subsonic: bool,
+    pub server_version: Box<str>,
+    pub type_: Box<str>,
+    pub additional: T,
+}
+
+impl<T> SubsonicDataTrait<T> for OpenSubsonicData<T> {
+    fn status(&self) -> &str {
+        &self.status
+    }
+    fn version(&self) -> &str {
+        &self.version
+    }
+    fn additional(&self) -> &T {
+        &self.additional
+    }
+    fn into_additional(self) -> T {
+        self.additional
+    }
+}
+
+impl<'de, T> Deserialize<'de> for OpenSubsonicData<T> 
 where 
     T: de::Deserialize<'de>
 {
@@ -39,7 +214,7 @@ where
                     type Value = Field;
 
                     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                        formatter.write_str("`status`, `version`, `openSubsonic`, `serverVersion`, `type` or any subsonic compatible field")
+                        formatter.write_str("`status`, `version`, `openSubsonic`, `serverVersion`, `type` or any opensubsonic compatible field")
                     }
 
                     fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -69,7 +244,7 @@ where
         where
             T: de::Deserialize<'de>
         {
-            type Value = SubsonicData<T>;
+            type Value = OpenSubsonicData<T>;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("struct Foobar")
@@ -127,13 +302,16 @@ where
                 }
                 let status = status.ok_or_else(|| de::Error::missing_field("status"))?;
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
+                let open_subsonic = open_subsonic.ok_or_else(|| de::Error::missing_field("open_subsonic"))?;
+                let server_version = server_version.ok_or_else(|| de::Error::missing_field("server_version"))?;
+                let type_ = type_.ok_or_else(|| de::Error::missing_field("type_"))?;
                 let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
-                Ok(SubsonicData { status, version, open_subsonic, server_version, type_, additional })
+                Ok(OpenSubsonicData { status, version, open_subsonic, server_version, type_, additional })
             }
         }
 
         const FIELDS: &[&str] = &["status", "version", "openSubsonic", "serverVersion", "type", "*"];
-        deserializer.deserialize_struct("SubsonicData", FIELDS, FoobarVisitor { phantom: std::marker::PhantomData })
+        deserializer.deserialize_struct("OpenSubsonicData", FIELDS, FoobarVisitor { phantom: std::marker::PhantomData })
     }
 }
 
@@ -174,7 +352,7 @@ mod tests {
 
     #[test]
     fn search3() {
-        let data: SubsonicData<SearchResult3> = serde_json::from_str(r#"
+        let data: OpenSubsonicData<SearchResult3> = serde_json::from_str(r#"
             {
     "status": "ok",
     "version": "1.16.1",

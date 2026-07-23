@@ -2,6 +2,7 @@ pub mod models;
 pub mod parameters;
 
 use rand::{distr::Alphanumeric, prelude::*};
+use serde::de::DeserializeOwned;
 use serde::Serialize;
 use thiserror::Error;
 use crate::models::*;
@@ -105,11 +106,25 @@ pub enum SubsonicError {
     Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
 }
 
+pub trait SubsonicServerInfo {
+    type BasicResponse: DeserializeOwned;
+    type SubsonicResponse<T: DeserializeOwned>: DeserializeOwned + SubsonicResponseTrait<T>;
+}
 pub struct Subsonic;
 pub struct OpenSubsonic;
 
+impl SubsonicServerInfo for Subsonic {
+    type BasicResponse = SubsonicBasicResponse;
+    type SubsonicResponse<T: DeserializeOwned> = SubsonicResponse<T>;
+}
+
+impl SubsonicServerInfo for OpenSubsonic {
+    type BasicResponse = OpenSubsonicBasicResponse;
+    type SubsonicResponse<T: DeserializeOwned> = OpenSubsonicResponse<T>;
+}
+
 /// A Client for the Subsonic API and OpenSubsonic
-pub struct Client<T> {
+pub struct Client<T: SubsonicServerInfo> {
     client: reqwest::Client,
     url: String,
     parameters: SubsonicParameters,
@@ -118,7 +133,7 @@ pub struct Client<T> {
 pub type SubsonicClient = Client<Subsonic>;
 pub type OpenSubsonicClient = Client<OpenSubsonic>;
 
-impl<T> Client<T> {
+impl<T: SubsonicServerInfo> Client<T> {
     pub fn new(url: &str, parameters: SubsonicParameters) -> Self {
         Self {
             client: reqwest::Client::new(),
@@ -136,7 +151,7 @@ impl<T> Client<T> {
         }
     }
     /// Used to test the connectivity with the server.
-    pub async fn ping(&self) -> Result<BasicResponse, SubsonicError> {
+    pub async fn ping(&self) -> Result<T::BasicResponse, SubsonicError> {
         let url = format!("{}/rest/ping.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -153,13 +168,14 @@ impl<T> Client<T> {
             .await?;
 
         
-        let subsonic_response: SubsonicResponse<License> = response.json().await?;
+        let subsonic_response: T::SubsonicResponse<License> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
+        if subsonic_data.status() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.additional)
+        Ok(subsonic_data.into_additional())
     }
     pub async fn search3(&self, parameters: Search3Parameters) -> Result<SearchResult3, SubsonicError> {
         let url = format!("{}/rest/search3.view", self.url);
@@ -172,20 +188,21 @@ impl<T> Client<T> {
         // TODO fix the type mess
         let url = response.url().to_owned();
         let response_text = response.text().await?;
-        let subsonic_response: SubsonicResponse<SearchResult3> = match serde_json::from_str(&response_text) {
+        let subsonic_response: T::SubsonicResponse<SearchResult3> = match serde_json::from_str(&response_text) {
             Ok(success) => success,
             Err(error) => {
                 return Err(SubsonicError::Deserialization { url: url.as_str().into(), body: response_text.into(), serde_error: error });
             }
         };
 
-        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
+        let subsonic_data = subsonic_response.into_subsonic_data();
+        if subsonic_data.status() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.additional)
+        Ok(subsonic_data.into_additional())
     }
-    pub async fn star(&self, parameters: StarParameters) -> Result<BasicResponse, SubsonicError> {
+    pub async fn star(&self, parameters: StarParameters) -> Result<T::BasicResponse, SubsonicError> {
         let url =  format!("{}/rest/star.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -195,7 +212,7 @@ impl<T> Client<T> {
 
         Ok(response.json().await?)
     }
-    pub async fn unstar(&self, parameters: StarParameters) -> Result<BasicResponse, SubsonicError> {
+    pub async fn unstar(&self, parameters: StarParameters) -> Result<T::BasicResponse, SubsonicError> {
         let url =  format!("{}/rest/unstar.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -214,13 +231,14 @@ impl<T> Client<T> {
             .await?;
 
         // TODO fix the type mess
-        let subsonic_response: SubsonicResponse<Song> = response.json().await?;
+        let subsonic_response: T::SubsonicResponse<Song> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
+        if subsonic_data.status() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.additional)
+        Ok(subsonic_data.into_additional())
     }
     pub async fn get_lyrics(&self, parameters: GetLyricsParameters) -> Result<Lyrics, SubsonicError> {
         let url = format!("{}/rest/getLyrics.view", self.url);
@@ -231,13 +249,14 @@ impl<T> Client<T> {
             .await?;
 
         
-        let subsonic_response: SubsonicResponse<Lyrics> = response.json().await?;
+        let subsonic_response: T::SubsonicResponse<Lyrics> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
+        if subsonic_data.status() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.additional)
+        Ok(subsonic_data.into_additional())
     }
 }
 
@@ -253,13 +272,14 @@ impl Client<OpenSubsonic> {
             .await?;
 
         
-        let subsonic_response: SubsonicResponse<LyricsList> = response.json().await?;
+        let subsonic_response: OpenSubsonicResponse<LyricsList> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
+        if subsonic_data.status() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.additional)
+        Ok(subsonic_data.into_additional())
     }
     pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError> {
         // TODO write Tests
@@ -272,13 +292,14 @@ impl Client<OpenSubsonic> {
             .await?;
 
         
-        let subsonic_response: SubsonicResponse<EnhancedLyricsList> = response.json().await?;
+        let subsonic_response: OpenSubsonicResponse<EnhancedLyricsList> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_response.subsonic_response.status.as_ref() != "ok" {
+        if subsonic_data.status() != "ok" {
             return Err(SubsonicError::Failed);
         }
 
-        Ok(subsonic_response.subsonic_response.additional)
+        Ok(subsonic_data.into_additional())
     }
 }
 
