@@ -105,19 +105,26 @@ pub enum SubsonicError {
     Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
 }
 
-pub struct Client {
+pub struct Subsonic;
+pub struct OpenSubsonic;
+
+/// A Client for the Subsonic API and OpenSubsonic
+pub struct Client<T> {
     client: reqwest::Client,
     url: String,
     parameters: SubsonicParameters,
+    phantom: std::marker::PhantomData<T>
 }
+pub type SubsonicClient = Client<Subsonic>;
+pub type OpenSubsonicClient = Client<OpenSubsonic>;
 
-impl Client {
-    /// A Client for the Subsonic API and OpenSubsonic
+impl<T> Client<T> {
     pub fn new(url: &str, parameters: SubsonicParameters) -> Self {
         Self {
             client: reqwest::Client::new(),
             url: url.to_owned(),
             parameters,
+            phantom: std::marker::PhantomData
         }
     }
     pub fn with_client(client: reqwest::Client, url: &str, parameters: SubsonicParameters) -> Self {
@@ -125,6 +132,7 @@ impl Client {
             client,
             url: url.to_owned(),
             parameters,
+            phantom: std::marker::PhantomData
         }
     }
     /// Used to test the connectivity with the server.
@@ -231,9 +239,12 @@ impl Client {
 
         Ok(subsonic_response.subsonic_response.additional)
     }
+}
+
+impl Client<OpenSubsonic> {
     pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError> {
         // TODO write Tests
-        // TODO account for Subsonic Servers
+        // TODO account for OpenSubsonic Servers that don't implement the Extension
         let url = self.url.clone() + "/rest/getLyricsBySongId.view";
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -252,7 +263,7 @@ impl Client {
     }
     pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError> {
         // TODO write Tests
-        // TODO account for Subsonic Servers
+        // TODO account for OpenSubsonic Servers that don't implement the Extension
         let url = self.url.clone() + "/rest/getLyricsBySongId.view";
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -299,7 +310,7 @@ mod tests {
     async fn ping() {
         // For Subsonic
         let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-        let subsonic_client = Client::new(SUBSONIC.url, parameters);
+        let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
 
         let ping_response_result = subsonic_client.ping().await;
         let ping_response = ping_response_result.unwrap();
@@ -307,7 +318,7 @@ mod tests {
 
         // For Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-        let subsonic_client = Client::new(NAVIDROME.url, parameters);
+        let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
         let ping_response = subsonic_client.ping().await.unwrap();
         assert_eq!(ping_response.subsonic_response.status, "ok".into(), "{:#?}", ping_response);
@@ -317,14 +328,14 @@ mod tests {
     async fn get_license() {
         // For Subsonic
         let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-        let subsonic_client = Client::new(SUBSONIC.url, parameters);
+        let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
 
         let license = subsonic_client.get_license().await.unwrap();
         assert!(license.valid, "{:#?}", license);
 
         // For Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-        let subsonic_client = Client::new(NAVIDROME.url, parameters);
+        let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
         let license = subsonic_client.get_license().await.unwrap();
         assert!(license.valid, "{:#?}", license);
@@ -334,7 +345,7 @@ mod tests {
     async fn search3() {
         // For Subsonic
         let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-        let subsonic_client = Client::new(SUBSONIC.url, parameters);
+        let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
 
         let search3_response = subsonic_client.search3(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
 
@@ -346,7 +357,7 @@ mod tests {
     async fn star_unstar_song() {
         // Subsonic
         let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-        let client = Client::new(SUBSONIC.url, parameters);
+        let client = SubsonicClient::new(SUBSONIC.url, parameters);
 
         // Search Song
         let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
@@ -390,7 +401,7 @@ mod tests {
 
         // Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-        let client = Client::new(NAVIDROME.url, parameters);
+        let client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
         // Search Song
         let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
@@ -439,7 +450,7 @@ mod tests {
         // TODO can't seem to get a response for any of these combinations
         // For Subsonic
         // let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-        // let subsonic_client = Client::new(SUBSONIC.url, parameters);
+        // let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
 
         // Title Only
         // let get_lyrics_parameters = GetLyricsParameters::title("");
@@ -455,7 +466,7 @@ mod tests {
 
         // For Navidrome
         let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-        let subsonic_client = Client::new(NAVIDROME.url, parameters);
+        let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
         // TODO can't seem to get a response for title only and artist only
         // Title Only
