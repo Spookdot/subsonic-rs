@@ -8,9 +8,60 @@ use thiserror::Error;
 use crate::models::*;
 use crate::parameters::*;
 
+fn hash_password(password: &str) -> (String, String) {
+    let rng = rand::rng();
+    let salt: String = rng.sample_iter(Alphanumeric)
+        .take(64)
+        .map(char::from)
+        .collect();
+
+    let salted_password = password.to_owned() + salt.as_str();
+    let hashed_password = format!("{:x}", md5::compute(salted_password.as_bytes()));
+    (hashed_password, salt)
+}
+
+pub trait SubsonicAuthenticationTrait {
+    fn legacy_password(username: &str, password: &str) -> Self;
+    fn hashed_password(username: &str, password: &str) -> Self;
+}
+
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
-enum SubsonicAuthentication {
+pub enum SubsonicAuthentication {
+    LegacyPassword {
+        #[serde(rename = "u")]
+        username: Box<str>,
+        #[serde(rename = "p")]
+        password: Box<str>,
+    },
+    HashedPassword {
+        #[serde(rename = "u")]
+        username: Box<str>,
+        #[serde(rename = "t")]
+        hashed_password: Box<str>,
+        #[serde(rename = "s")]
+        salt: Box<str>,
+    },
+}
+
+impl SubsonicAuthenticationTrait for SubsonicAuthentication {
+    fn legacy_password(username: &str, password: &str) -> Self {
+        Self::LegacyPassword { username: username.into(), password: password.into() }
+    }
+    fn hashed_password(username: &str, password: &str) -> Self {
+        let (hashed_password, salt) = hash_password(password);
+
+        Self::HashedPassword { 
+            username: username.into(), 
+            hashed_password: hashed_password.into(), 
+            salt: salt.into() 
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+#[serde(untagged)]
+pub enum OpenSubsonicAuthentication {
     LegacyPassword {
         #[serde(rename = "u")]
         username: Box<str>,
@@ -28,11 +79,32 @@ enum SubsonicAuthentication {
     Token {
         #[serde(rename = "apiKey")]
         api_key: Box<str>
+    },
+}
+
+impl OpenSubsonicAuthentication {
+    pub fn token(token: &str) -> Self {
+        Self::Token { api_key: token.into() }
+    }
+}
+
+impl SubsonicAuthenticationTrait for OpenSubsonicAuthentication {
+    fn legacy_password(username: &str, password: &str) -> Self {
+        Self::LegacyPassword { username: username.into(), password: password.into() }
+    }
+    fn hashed_password(username: &str, password: &str) -> Self {
+        let (hashed_password, salt) = hash_password(password);
+
+        Self::HashedPassword { 
+            username: username.into(), 
+            hashed_password: hashed_password.into(), 
+            salt: salt.into() 
+        }
     }
 }
 
 #[derive(Serialize, Debug)]
-pub struct SubsonicParameters {
+pub struct SubsonicParameters<T: SubsonicAuthenticationTrait> {
     #[serde(rename = "v")]
     version: Box<str>,
     #[serde(rename = "f")]
@@ -40,11 +112,11 @@ pub struct SubsonicParameters {
     #[serde(rename = "c")]
     client: Box<str>,
     #[serde(flatten)]
-    authentication: SubsonicAuthentication,
+    authentication: T,
 }
 
-impl SubsonicParameters {
-    fn new(client_name: &str, version: &str, authentication: SubsonicAuthentication) -> Self {
+impl<T: SubsonicAuthenticationTrait> SubsonicParameters<T> {
+    fn new(client_name: &str, version: &str, authentication: T) -> Self {
         Self {
             client: client_name.into(),
             version: version.into(),
@@ -55,11 +127,7 @@ impl SubsonicParameters {
     /// Use the legacy password authentication method with a clear text password
     pub fn legacy_password(client_name: &str, username: &str, password: &str, version: &str) -> Self {
         // TODO implement hex-encoded variant
-        let authentication = SubsonicAuthentication::LegacyPassword {
-            username: username.into(),
-            password: password.into(),
-        };
-
+        let authentication = T::legacy_password(username, password);
         Self::new(client_name, version, authentication)
     }
     /// Supported since Subsonic 1.13.0
@@ -67,28 +135,17 @@ impl SubsonicParameters {
     /// Authenticate to Subsonic with a hashed password. Salt is generated inside the method. Uses
     /// md5
     pub fn hashed_password(client_name: &str, username: &str, password: &str, version: &str) -> Self {
-        let rng = rand::rng();
-        let salt: String = rng.sample_iter(Alphanumeric)
-            .take(64)
-            .map(char::from)
-            .collect();
-
-        let salted_password = password.to_owned() + salt.as_str();
-        let hashed_password = format!("{:x}", md5::compute(salted_password.as_bytes()));
-
-        let authentication = SubsonicAuthentication::HashedPassword { 
-            username: username.into(), 
-            hashed_password: hashed_password.into(), 
-            salt: salt.into() 
-        };
-
+        let authentication = T::hashed_password(username, password);
         Self::new(client_name, version, authentication)
     }
+}
+
+impl SubsonicParameters<OpenSubsonicAuthentication> {
     /// Supported only by OpenSubsonic
     /// 
     /// Authenticate to OpenSubsonic with a token generated by the server
     pub fn token(client_name: &str, token: &str, version: &str) -> Self {
-        let authentication = SubsonicAuthentication::Token { api_key: token.into() };
+        let authentication = OpenSubsonicAuthentication::token(token);
         Self::new(client_name, version, authentication)
     }
 }
@@ -107,6 +164,7 @@ pub enum SubsonicError {
 }
 
 pub trait SubsonicServerInfo {
+    type SubsonicAuthentication: Serialize + SubsonicAuthenticationTrait;
     type BasicResponse: DeserializeOwned;
     type SubsonicResponse<T: DeserializeOwned>: DeserializeOwned + SubsonicResponseTrait<T>;
 }
@@ -114,11 +172,13 @@ pub struct Subsonic;
 pub struct OpenSubsonic;
 
 impl SubsonicServerInfo for Subsonic {
+    type SubsonicAuthentication = SubsonicAuthentication;
     type BasicResponse = SubsonicBasicResponse;
     type SubsonicResponse<T: DeserializeOwned> = SubsonicResponse<T>;
 }
 
 impl SubsonicServerInfo for OpenSubsonic {
+    type SubsonicAuthentication = OpenSubsonicAuthentication;
     type BasicResponse = OpenSubsonicBasicResponse;
     type SubsonicResponse<T: DeserializeOwned> = OpenSubsonicResponse<T>;
 }
@@ -127,14 +187,14 @@ impl SubsonicServerInfo for OpenSubsonic {
 pub struct Client<T: SubsonicServerInfo> {
     client: reqwest::Client,
     url: String,
-    parameters: SubsonicParameters,
+    parameters: SubsonicParameters<T::SubsonicAuthentication>,
     phantom: std::marker::PhantomData<T>
 }
 pub type SubsonicClient = Client<Subsonic>;
 pub type OpenSubsonicClient = Client<OpenSubsonic>;
 
 impl<T: SubsonicServerInfo> Client<T> {
-    pub fn new(url: &str, parameters: SubsonicParameters) -> Self {
+    pub fn new(url: &str, parameters: SubsonicParameters<T::SubsonicAuthentication>) -> Self {
         Self {
             client: reqwest::Client::new(),
             url: url.to_owned(),
@@ -142,7 +202,7 @@ impl<T: SubsonicServerInfo> Client<T> {
             phantom: std::marker::PhantomData
         }
     }
-    pub fn with_client(client: reqwest::Client, url: &str, parameters: SubsonicParameters) -> Self {
+    pub fn with_client(client: reqwest::Client, url: &str, parameters: SubsonicParameters<T::SubsonicAuthentication>) -> Self {
         Self {
             client,
             url: url.to_owned(),
