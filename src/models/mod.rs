@@ -40,6 +40,15 @@ pub struct OpenSubsonicBasicData {
     pub type_: Box<str>,
 }
 
+/// A supported OpenSubsonic API extension.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenSubsonicExtension {
+    /// The name of the extension
+    pub name: Box<str>,
+    /// The list of supported versions of this extension.
+    pub versions: Vec<u32>,
+}
+
 /// A word or syllable cue within a cueLine.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase" )]

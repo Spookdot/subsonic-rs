@@ -361,6 +361,23 @@ impl Client<OpenSubsonic> {
 
         Ok(subsonic_data.into_additional())
     }
+    pub async fn get_open_subsonic_extensions(&self) -> Result<Vec<OpenSubsonicExtension>, SubsonicError> {
+        let url = format!("{}/rest/getOpenSubsonicExtensions.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .send()
+            .await?;
+
+        
+        let subsonic_response: OpenSubsonicResponse<Vec<OpenSubsonicExtension>> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
+
+        if subsonic_data.status() != "ok" {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_data.into_additional())
+    }
 }
 
 #[cfg(test)]
@@ -432,6 +449,7 @@ mod tests {
 
         assert_eq!(search3_response.album.len(), 1, "{:#?}", search3_response);
         assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer", "{:#?}", search3_response);
+        // TODO add Navidrome test
     }
 
     #[tokio::test]
@@ -564,5 +582,20 @@ mod tests {
         assert_eq!(get_lyrics_response.title, "Letting You".into(), "The titles don't match for Navidrome Title and Artist");
         assert_eq!(get_lyrics_response.artist, "Nine Inch Nails".into(), "The artists don't match for Navidrome Title and Artist");
         assert!(!get_lyrics_response.value.is_empty(), "Lyrics should not be empty for Navidrome Title and Artist");
+    }
+
+    #[tokio::test]
+    async fn get_open_subsonic_extensions() {
+        // Not supported by Subsonic
+        // For Navidrome
+        let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+        let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+        let extensions = subsonic_client.get_open_subsonic_extensions().await.unwrap();
+        // Filter for the songLyrics extension and error if it is missing
+        let song_lyrics_extension = extensions.iter().find(|x| x.name.as_ref() == "songLyrics").unwrap();
+        // Check that both versions of the songLyrics extension are supported
+        assert_eq!(song_lyrics_extension.versions[0], 1, "SongLyrics Extension Version 1 should be supported");
+        assert_eq!(song_lyrics_extension.versions[1], 2, "SongLyrics Extension Version 2 should be supported");
     }
 }
