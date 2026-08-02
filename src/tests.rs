@@ -82,7 +82,7 @@ async fn star_unstar_song() {
     // Check if starred
     if song.starred.is_some() {
         // Unstar if starred
-        let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.unstar(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if unstarred
@@ -90,7 +90,7 @@ async fn star_unstar_song() {
         assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
 
         // Star after unstarring
-        let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.star(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if starred
@@ -98,7 +98,7 @@ async fn star_unstar_song() {
         assert!(song.starred.is_some(), "Song should be starred after Star method was called");
     } else {
         // Star if unstarred
-        let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.star(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if starred
@@ -106,7 +106,7 @@ async fn star_unstar_song() {
         assert!(song.starred.is_some(), "Song should be starred after Star method was called");
 
         // Unstar after starring
-        let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.unstar(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if unstarred
@@ -126,7 +126,7 @@ async fn star_unstar_song() {
     // Check if starred
     if song.starred.is_some() {
         // Unstar if starred
-        let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.unstar(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if unstarred
@@ -134,7 +134,7 @@ async fn star_unstar_song() {
         assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
 
         // Star after unstarring
-        let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.star(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if starred
@@ -142,7 +142,7 @@ async fn star_unstar_song() {
         assert!(song.starred.is_some(), "Song should be starred after Star method was called");
     } else {
         // Star if unstarred
-        let starred_response = client.star(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.star(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if starred
@@ -150,7 +150,7 @@ async fn star_unstar_song() {
         assert!(song.starred.is_some(), "Song should be starred after Star method was called");
 
         // Unstar after starring
-        let starred_response = client.unstar(StarParameters::id(&song_id)).await.unwrap();
+        let starred_response = client.unstar(StarParameters::id(song_id.clone())).await.unwrap();
         assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
 
         // Check if unstarred

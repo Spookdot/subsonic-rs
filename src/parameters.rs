@@ -14,7 +14,7 @@ pub struct Search3Parameters {
 }
 
 impl Search3Parameters {
-    pub fn query(query: &str) -> Self {
+    pub fn query(query: impl Into<Box<str>>) -> Self {
         Self {
             query: query.into(),
             ..Default::default()
@@ -47,23 +47,27 @@ pub struct StarParameters {
 
 impl StarParameters {
     // TODO consider changing all &str to `impl Into<Box<str>>`
-    pub fn new(id: Option<&str>, album_id: Option<&str>, artist_id: Option<&str>) -> Self {
+    pub fn new(id: Option<impl Into<Box<str>>>, album_id: Option<impl Into<Box<str>>>, artist_id: Option<impl Into<Box<str>>>) -> Self {
         Self {
             id: id.map(Into::into),
             album_id: album_id.map(Into::into),
             artist_id: artist_id.map(Into::into),
         }
     }
-    pub fn id(id: &str) -> Self {
+    pub fn id(id: impl Into<Box<str>>) -> Self {
         Self { id: Some(id.into()), ..Default::default() }
     }
-    pub fn album_id(album_id: &str) -> Self {
+    pub fn album_id(album_id: impl Into<Box<str>>) -> Self {
         Self { album_id: Some(album_id.into()), ..Default::default() }
     }
-    pub fn artist_id(artist_id: &str) -> Self {
+    pub fn artist_id(artist_id: impl Into<Box<str>>) -> Self {
         Self { artist_id: Some(artist_id.into()), ..Default::default() }
     }
-    pub fn all(id: &str, album_id: &str, artist_id: &str) -> Self {
+    pub fn all(
+        id: impl Into<Box<str>>, 
+        album_id: impl Into<Box<str>>, 
+        artist_id: impl Into<Box<str>>
+    ) -> Self {
         Self {
             id: Some(id.into()),
             album_id: Some(album_id.into()),
@@ -82,16 +86,16 @@ pub struct GetLyricsParameters {
 }
 
 impl GetLyricsParameters {
-    pub fn new(artist: &str, title: &str) -> Self {
+    pub fn new(artist: impl Into<Box<str>>, title: impl Into<Box<str>>) -> Self {
         Self {
             artist: Some(artist.into()),
             title: Some(title.into()),
         }
     }
-    pub fn title(title: &str) -> Self {
+    pub fn title(title: impl Into<Box<str>>) -> Self {
         Self { title: Some(title.into()), ..Default::default() }
     }
-    pub fn artist(artist: &str) -> Self {
+    pub fn artist(artist: impl Into<Box<str>>) -> Self {
         Self { artist: Some(artist.into()), ..Default::default() }
     }
 }
