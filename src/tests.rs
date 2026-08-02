@@ -176,7 +176,7 @@ async fn get_lyrics() {
     // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
 
     // Title and Artist
-    // let get_lyrics_parameters = GetLyricsParameters::new("", "");
+    // let get_lyrics_parameters = GetLyricsParameters::all("", "");
     // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
 
     // For Navidrome
@@ -193,7 +193,7 @@ async fn get_lyrics() {
     // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
 
     // Title and Artist
-    let get_lyrics_parameters = GetLyricsParameters::new("Nine Inch Nails", "Letting You");
+    let get_lyrics_parameters = GetLyricsParameters::all("Nine Inch Nails", "Letting You");
     let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
     assert_eq!(get_lyrics_response.title, "Letting You".into(), "The titles don't match for Navidrome Title and Artist");
     assert_eq!(get_lyrics_response.artist, "Nine Inch Nails".into(), "The artists don't match for Navidrome Title and Artist");
