@@ -209,9 +209,25 @@ async fn get_lyrics_by_song_id() {
     // Retrieve lyrics for song "Letting You" by Nine Inch Nails
     let get_lyrics_response = subsonic_client.get_lyrics_by_song_id("eMCrMHEMJG7IMu3soo0wsg").await.unwrap();
     let lyrics = get_lyrics_response.structured_lyrics[0].to_owned();
-    // TODO decide between ways of asserting
+
     assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", &lyrics.display_title);
     assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", &lyrics.display_artist);
+    assert_eq!(lyrics.line[0].value.as_ref(), "Letting You", "Got {:?} instead of the lyric \"Letting You\"", lyrics.line[0].value);
+}
+
+#[tokio::test]
+async fn get_lyrics_by_song_id_enhanced() {
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    // Retrieve lyrics for song "Letting You" by Nine Inch Nails
+    let get_lyrics_response = subsonic_client.get_lyrics_by_song_id_enhanced("eMCrMHEMJG7IMu3soo0wsg").await.unwrap();
+    let lyrics = get_lyrics_response.structured_lyrics[0].to_owned();
+
+    assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", &lyrics.display_title);
+    assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", &lyrics.display_artist);
+    assert_eq!(lyrics.kind, Some(StructuredLyricsKind::Main));
     assert_eq!(lyrics.line[0].value.as_ref(), "Letting You", "Got {:?} instead of the lyric \"Letting You\"", lyrics.line[0].value);
 }
 

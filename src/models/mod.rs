@@ -1,19 +1,19 @@
 mod subsonic_response;
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 pub use subsonic_response::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct SubsonicError {
     pub code: u8,
-    pub message: String
+    pub message: String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsonicBasicResponse {
-    pub subsonic_response: SubsonicBasicData
+    pub subsonic_response: SubsonicBasicData,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -26,7 +26,7 @@ pub struct SubsonicBasicData {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct OpenSubsonicBasicResponse {
-    pub subsonic_response: OpenSubsonicBasicData
+    pub subsonic_response: OpenSubsonicBasicData,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -51,13 +51,13 @@ pub struct OpenSubsonicExtension {
 
 /// A word or syllable cue within a cueLine.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase" )]
+#[serde(rename_all = "camelCase")]
 pub struct Cue {
     /// Start time in milliseconds
     pub start: u32,
-    /// End time in milliseconds. Within a `cueLine`, `end` **must** be either present on **all** cues or **none**. 
-    /// When the source provides partial end times, servers **must** fill missing values (e.g., using the next cue’s `start`, or the cueLine’s `end` for the final cue). 
-    /// When no cues have end times (e.g., Enhanced LRC with start-only timing), `end` is omitted from all cues. 
+    /// End time in milliseconds. Within a `cueLine`, `end` **must** be either present on **all** cues or **none**.
+    /// When the source provides partial end times, servers **must** fill missing values (e.g., using the next cue’s `start`, or the cueLine’s `end` for the final cue).
+    /// When no cues have end times (e.g., Enhanced LRC with start-only timing), `end` is omitted from all cues.
     /// This is a documented contract rule; the OpenAPI schema does not enforce the all-or-none shape structurally
     #[serde(default)]
     pub end: u32,
@@ -66,13 +66,12 @@ pub struct Cue {
     /// Zero-based inclusive UTF-8 byte offset into the parent `cueLine.value` where this cue ends
     pub byte_end: u32,
     /// The text of this word or syllable
-    pub value: Box<str>
+    pub value: Box<str>,
 }
-
 
 /// Word/syllable-level timing data for a lyrics line or agent layer.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase" )]
+#[serde(rename_all = "camelCase")]
 pub struct CueLine {
     /// Zero-based index into the parent `line` array this cueLine corresponds to
     pub index: u32,
@@ -82,13 +81,13 @@ pub struct CueLine {
     /// End time in milliseconds
     #[serde(default)]
     pub end: u32,
-    /// Full text for this cueLine. 
-    /// When agent attribution splits one parent line into multiple cueLines, this is the text for that cueLine’s agent/layer, not necessarily the parent line’s combined text. 
+    /// Full text for this cueLine.
+    /// When agent attribution splits one parent line into multiple cueLines, this is the text for that cueLine’s agent/layer, not necessarily the parent line’s combined text.
     /// Required because every nested `cue` defines `byteStart` / `byteEnd` against this exact final UTF-8 string
     pub value: Box<str>,
-    /// Opaque identifier referencing an `agent` in the same `structuredLyrics` entry. 
-    /// If the parent `structuredLyrics` entry includes `agents`, every cueLine in that entry **must** include `agentId`, and the value **must** match exactly one `agents[].id` in that entry. 
-    /// If the parent entry does not include `agents`, cueLines **must not** include `agentId`. 
+    /// Opaque identifier referencing an `agent` in the same `structuredLyrics` entry.
+    /// If the parent `structuredLyrics` entry includes `agents`, every cueLine in that entry **must** include `agentId`, and the value **must** match exactly one `agents[].id` in that entry.
+    /// If the parent entry does not include `agents`, cueLines **must not** include `agentId`.
     /// When multiple cueLines share the same `index`, the cueLine whose referenced agent has `role: "main"` **must** come first
     pub argent_id: Option<Box<str>>,
     /// Ordered list of word/syllable cues. Every cue **must** include `byteStart` / `byteEnd` offsets into `value`
@@ -97,7 +96,7 @@ pub struct CueLine {
 
 /// Semantic vocal-layer classification for cueLines that reference an agent.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase" )]
+#[serde(rename_all = "camelCase")]
 pub enum AgentRole {
     /// Lead/default vocal layer
     Main,
@@ -106,7 +105,7 @@ pub enum AgentRole {
     /// Background vocals
     Bg,
     /// Group/chorus vocals
-    Group
+    Group,
 }
 
 /// Reusable metadata for a vocal agent within a structuredLyrics entry.
@@ -114,12 +113,12 @@ pub enum AgentRole {
 pub struct Agent {
     /// Opaque identifier for this agent. The value is only meaningful within the parent `structuredLyrics` entry and **must** be unique within that entry
     pub id: Box<str>,
-    /// Semantic vocal-layer classification for cueLines that reference this agent. 
-    /// One of: 
-    /// `main` (lead/default vocal layer), 
-    /// `voice` (additional explicit individual voice part), 
-    /// `bg` (background vocals), 
-    /// `group` (group/chorus vocals). 
+    /// Semantic vocal-layer classification for cueLines that reference this agent.
+    /// One of:
+    /// `main` (lead/default vocal layer),
+    /// `voice` (additional explicit individual voice part),
+    /// `bg` (background vocals),
+    /// `group` (group/chorus vocals).
     /// When a structuredLyrics entry uses agents for cue-attributed lyrics, it **must** define exactly one main agent
     pub role: AgentRole,
     /// Optional human-readable label for this agent, such as a singer or character name from the source metadata
@@ -137,13 +136,13 @@ pub struct Line {
 }
 
 /// The primary lyric-layer classification for a `structuredLyrics` entry.
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase" )]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub enum StructuredLyricsKind {
     /// Primary vocals for this entry, default if omitted
-    Main, 
+    Main,
     /// A translation of another lyric layer into another language
-    Translation, 
+    Translation,
     /// A phonetic/romanized rendering, e.g. romaji for Japanese, pinyin for Chinese
     Pronunciation,
 }
@@ -165,28 +164,29 @@ pub struct EnhancedStructuredLyrics {
     /// The offset to apply to all lyrics, in milliseconds. Positive means lyrics appear sooner, negative means later. If not included, the offset **must** be assumed to be 0
     #[serde(default)]
     pub offset: i32,
-    /// Reusable per-track attribution metadata for `cueLine` entries. 
-    /// When present, **must** contain at least one entry, and each `agents[].id` **must** be unique within this `structuredLyrics` entry. 
-    /// `agents` are optional for simple unattributed single-layer lyrics. 
-    /// When a `structuredLyrics` entry represents multiple vocal agents/layers, it **must** include `agents`; 
-    /// a single-agent attributed/default entry may also include `agents`, and if it does, exactly one agent **must** use `role: "main"`. 
+    /// Reusable per-track attribution metadata for `cueLine` entries.
+    /// When present, **must** contain at least one entry, and each `agents[].id` **must** be unique within this `structuredLyrics` entry.
+    /// `agents` are optional for simple unattributed single-layer lyrics.
+    /// When a `structuredLyrics` entry represents multiple vocal agents/layers, it **must** include `agents`;
+    /// a single-agent attributed/default entry may also include `agents`, and if it does, exactly one agent **must** use `role: "main"`.
     /// `agents` should not be emitted without `cueLine` data
     #[serde(default)]
     pub agents: Vec<Agent>,
-    /// The primary lyric-layer classification for this `structuredLyrics` entry. 
-    /// One of: 
-    /// `main` (primary vocals for this entry, default if omitted), 
-    /// `translation` (a translation of another lyric layer into another language), 
-    /// `pronunciation` (a phonetic/romanized rendering, e.g. romaji for Japanese, pinyin for Chinese). 
+    /// The primary lyric-layer classification for this `structuredLyrics` entry.
+    /// One of:
+    /// `main` (primary vocals for this entry, default if omitted),
+    /// `translation` (a translation of another lyric layer into another language),
+    /// `pronunciation` (a phonetic/romanized rendering, e.g. romaji for Japanese, pinyin for Chinese).
     /// Tracks are independent across `kind` values; clients should not assume 1:1 line or cue alignment between entries. Only returned when `enhanced=true`. Added in `songLyrics` version 2
     pub kind: Option<StructuredLyricsKind>,
-    /// Word/syllable-level timing data. 
-    /// Each cueLine corresponds to a `line` by its `index` field. 
-    /// Every cueLine **must** include `value`, and every nested cue **must** include `byteStart` / `byteEnd` offsets into that exact string. 
-    /// If `agents` is present, every cueLine in the entry **must** include `agentId`; 
-    /// if `agents` is absent, cueLines **must not** include `agentId`. 
-    /// Only returned when `enhanced=true` and `synced` is `true`. 
+    /// Word/syllable-level timing data.
+    /// Each cueLine corresponds to a `line` by its `index` field.
+    /// Every cueLine **must** include `value`, and every nested cue **must** include `byteStart` / `byteEnd` offsets into that exact string.
+    /// If `agents` is present, every cueLine in the entry **must** include `agentId`;
+    /// if `agents` is absent, cueLines **must not** include `agentId`.
+    /// Only returned when `enhanced=true` and `synced` is `true`.
     /// Added in `songLyrics` version 2
+    #[serde(default)]
     pub cue_line: Vec<CueLine>,
 }
 
@@ -241,7 +241,7 @@ pub struct Lyrics {
     pub artist: Box<str>,
     /// The song title
     #[serde(default)]
-    pub title: Box<str>
+    pub title: Box<str>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -273,7 +273,7 @@ pub struct Work {
     /// The work name.
     name: String,
     /// The MusicBrainz Work ID.
-    music_brainz_id: Option<String>
+    music_brainz_id: Option<String>,
 }
 
 /// A movement associated with a song.
@@ -285,7 +285,7 @@ pub struct Movement {
     /// The movement number.
     number: Option<u16>,
     /// The total number of movements.
-    count: Option<u16>
+    count: Option<u16>,
 }
 
 /// The replay gain data of a song.
@@ -321,9 +321,8 @@ pub struct Contributor {
     pub sub_role: Option<String>,
     /// The artist taking on the role.
     /// (Note: Only the required [ArtistID3] fields should be returned by default)
-    pub artist: ArtistID3
+    pub artist: ArtistID3,
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -393,7 +392,7 @@ pub struct DiscTitle {
     /// The nname of the disc.
     title: String,
     /// The cover art ID of the disc.
-    cover_art: Option<String>
+    cover_art: Option<String>,
 }
 
 /// A date for a media item that may be just a year, or year-month, or full date.
@@ -404,21 +403,21 @@ pub struct ItemDate {
     /// The month (1-12)
     month: Option<u16>,
     /// The day (1-31)
-    day: Option<u16>
+    day: Option<u16>,
 }
 
 /// A record label for an album.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RecordLabel {
     /// The record label name.
-    name: String
+    name: String,
 }
 
 /// A genre in list of genres for an item
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ItemGenre {
     /// Genre name
-    name: String
+    name: String,
 }
 
 /// An album from ID3 tags.
@@ -610,4 +609,3 @@ pub struct ArtistID3 {
     /// The list of all roles this artist has in the library.
     pub roles: Option<Vec<String>>,
 }
-
