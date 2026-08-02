@@ -1,7 +1,26 @@
 use serde::Serialize;
 
-/// Parameters for the [`crate::Client<T>::search3()`] method
-#[derive(Serialize)]
+/// Parameters for the [`subsonic::Client::search3()`](crate::Client::search3()) method
+/// ## Custom default
+/// This struct has a custom [`Default`](Search3Parameters::default) implementation returning the following default value:
+/// ```rust
+/// # use subsonic::parameters::Search3Parameters;
+/// # let tester = Search3Parameters::default();
+/// # let default =
+/// Search3Parameters {
+///     query: "".into(),
+///     artist_count: 20,
+///     artist_offset: 0,
+///     album_count: 20,
+///     album_offset: 0,
+///     song_count: 20,
+///     song_offset: 0,
+///     music_folder_id: None,
+/// }
+/// # ;
+/// # assert_eq!(default, tester);
+/// ```
+#[derive(Serialize, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Search3Parameters {
     /// Search query.
@@ -19,7 +38,7 @@ pub struct Search3Parameters {
     /// Search result offset for songs. Used for paging.
     pub song_offset: u32,
     /// (Since Subsonic 1.12.0) Only return results from music folder with the given ID. See
-    /// [`crate::Client<T>::getMusicFolders()`].
+    /// [`subsonic::Client::getMusicFolders()`](crate::Client::getMusicFolders()).
     pub music_folder_id: Option<Box<str>>,
 }
 
@@ -157,7 +176,7 @@ impl Default for Search3Parameters {
 }
 
 /// Parameters for the [`crate::Client<T>::star()`] and [`crate::Client<T>::unstar()`] methods
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct StarParameters {
     /// The ID of the file (song) or folder (album/artist) to star/unstar. Multiple parameters allowed.
@@ -216,7 +235,7 @@ impl StarParameters {
 }
 
 /// Parameters for the [`crate::Client<T>::get_lyrics()`] method
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetLyricsParameters {
     /// The artist name.

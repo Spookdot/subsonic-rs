@@ -1,5 +1,43 @@
+//! # subsonic
+//! Wrapper around both the Subsonic and OpenSubsonic API, intended to allow for wide support
+//! through the use of Rust's complex type system
+//!
+//! Despite the large amount of structs this wrapper uses, we do not at the time have builders and
+//! instead use a pattern of offering utility class methods and using struct literals together with
+//! the Default Trait
+//!
+//! ## Class Method approach
+//! ```rust
+//! # use subsonic::parameters::Search3Parameters;
+//! // This will fill all other fields with the defaults from the Default Trait unless otherwise
+//! // specified
+//! let search3_parameters = Search3Parameters::query("test");
+//!
+//! assert_eq!(search3_parameters.query, "test".into());
+//! assert_eq!(search3_parameters.song_count, 20);
+//! ```
+//! The default in this case is a custom implementation. In those cases that will be specified with
+//! the struct itself
+//! 
+//! ## Struct literal plus Default approach
+//! ```rust
+//! # use subsonic::parameters::Search3Parameters;
+//! let search3_parameters = Search3Parameters { 
+//!     query: "test".into(), 
+//!     song_count: 0,
+//!     ..Search3Parameters::default() 
+//! };
+//!
+//! assert_eq!(search3_parameters.query, "test".into());
+//! assert_eq!(search3_parameters.song_count, 0);
+//! assert_eq!(search3_parameters.artist_count, 20);
+//! ```
+
+/// Return types for the different endpoints
 pub mod models;
+/// Parameter Structs for endpoints with more than one parameter
 pub mod parameters;
+/// Authentication components needed to make a connection to the Subsonic Server
 pub mod auth;
 
 #[cfg(test)]
@@ -24,12 +62,32 @@ pub enum SubsonicError {
     Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
 }
 
+/// Utility Trait to contain information on the specific API
 pub trait SubsonicServerInfo {
+    /// Struct containing authentication query parameters to be sent with each request to the API
+    /// 
+    /// See: [`subsonic::auth`](crate::auth)
     type SubsonicAuthentication: Serialize + SubsonicAuthenticationTrait;
+    /// ReturnType for endpoints that do not send back any additional information
+    /// For example [`Client::ping()`](crate::Client::ping())
+    /// 
+    /// See: [`models::SubsonicBasicResponse`] and [`models::OpenSubsonicBasicResponse`]
     type BasicResponse: DeserializeOwned;
+    /// ReturnType for all other endpoints. Requires being able to take a Generic that implements
+    /// [`DeserializeOwned`]
+    /// 
+    /// For example `T::SubsonicResponse<SearchResult3>` for
+    /// [`Client::search3()`](crate::Client::search3()) so it can return
+    /// [`SearchResult3`]
+    /// 
+    /// See: [`models::SubsonicResponse`] and [`models::OpenSubsonicResponse`]
     type SubsonicResponse<T: DeserializeOwned>: DeserializeOwned + SubsonicResponseTrait<T>;
 }
+/// Struct using the [`SubsonicServerInfo`] Trait to contain information specific to the Subsonic
+/// API
 pub struct Subsonic;
+/// Struct using the [`SubsonicServerInfo`] Trait to contain information specific to the OpenSubsonic
+/// API
 pub struct OpenSubsonic;
 
 impl SubsonicServerInfo for Subsonic {
@@ -51,7 +109,9 @@ pub struct Client<T: SubsonicServerInfo> {
     parameters: SubsonicParameters<T::SubsonicAuthentication>,
     phantom: std::marker::PhantomData<T>
 }
+/// Alias to [`Client`] struct with only Subsonic supported APIs
 pub type SubsonicClient = Client<Subsonic>;
+/// Alias to [`Client`] struct with OpenSubsonic and Subsonic supported APIs
 pub type OpenSubsonicClient = Client<OpenSubsonic>;
 
 impl<T: SubsonicServerInfo> Client<T> {
