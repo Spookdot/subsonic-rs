@@ -10,26 +10,26 @@ pub struct SubsonicError {
     pub message: String,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsonicBasicResponse {
     pub subsonic_response: SubsonicBasicData,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SubsonicBasicData {
     pub status: Box<str>,
     pub version: Box<str>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct OpenSubsonicBasicResponse {
     pub subsonic_response: OpenSubsonicBasicData,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenSubsonicBasicData {
     pub status: Box<str>,
@@ -41,7 +41,7 @@ pub struct OpenSubsonicBasicData {
 }
 
 /// A supported OpenSubsonic API extension.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OpenSubsonicExtension {
     /// The name of the extension
     pub name: Box<str>,
@@ -50,7 +50,7 @@ pub struct OpenSubsonicExtension {
 }
 
 /// A word or syllable cue within a cueLine.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Cue {
     /// Start time in milliseconds
@@ -70,7 +70,7 @@ pub struct Cue {
 }
 
 /// Word/syllable-level timing data for a lyrics line or agent layer.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CueLine {
     /// Zero-based index into the parent `line` array this cueLine corresponds to
@@ -95,7 +95,7 @@ pub struct CueLine {
 }
 
 /// Semantic vocal-layer classification for cueLines that reference an agent.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum AgentRole {
     /// Lead/default vocal layer
@@ -109,7 +109,7 @@ pub enum AgentRole {
 }
 
 /// Reusable metadata for a vocal agent within a structuredLyrics entry.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Agent {
     /// Opaque identifier for this agent. The value is only meaningful within the parent `structuredLyrics` entry and **must** be unique within that entry
     pub id: Box<str>,
@@ -126,7 +126,7 @@ pub struct Agent {
 }
 
 /// One line of a song lyric.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Line {
     /// The start time of the lyrics, relative to the start time of the track, in milliseconds. If this is not part of synced lyrics, start **must** be omitted
     #[serde(default)]
@@ -148,7 +148,7 @@ pub enum StructuredLyricsKind {
 }
 
 /// Structured lyrics.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct EnhancedStructuredLyrics {
     /// The lyrics language (ideally ISO 639). If the language is unknown (e.g. lrc file), the server **must** return `und` (ISO standard) or `xxx` (common value for taggers)
@@ -191,7 +191,7 @@ pub struct EnhancedStructuredLyrics {
 }
 
 /// List of structured lyrics.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct EnhancedLyricsList {
     /// Structured lyrics. There can be multiple lyrics of the same type with the same language
@@ -200,7 +200,7 @@ pub struct EnhancedLyricsList {
 }
 
 /// Structured lyrics.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct StructuredLyrics {
     /// The lyrics language (ideally ISO 639). If the language is unknown (e.g. lrc file), the server **must** return `und` (ISO standard) or `xxx` (common value for taggers)
@@ -222,7 +222,7 @@ pub struct StructuredLyrics {
 }
 
 /// List of structured lyrics.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct LyricsList {
     /// Structured lyrics. There can be multiple lyrics of the same type with the same language
@@ -231,7 +231,7 @@ pub struct LyricsList {
 }
 
 /// Lyrics.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Lyrics {
     /// The lyrics
@@ -244,7 +244,7 @@ pub struct Lyrics {
     pub title: Box<str>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct License {
     pub valid: bool,
@@ -256,7 +256,7 @@ pub struct License {
     pub trial_expires: Box<str>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct SearchResult3 {
     #[serde(default)]
     pub artist: Vec<ArtistID3>,
@@ -267,7 +267,7 @@ pub struct SearchResult3 {
 }
 
 /// A work associated with a song.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Work {
     /// The work name.
@@ -277,7 +277,7 @@ pub struct Work {
 }
 
 /// A movement associated with a song.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Movement {
     /// The movement name.
@@ -289,7 +289,7 @@ pub struct Movement {
 }
 
 /// The replay gain data of a song.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ReplayGain {
     /// The track replay gain value. (In Db)
@@ -309,7 +309,7 @@ pub struct ReplayGain {
 }
 
 /// A contributor artist for a or an album.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Contributor {
     /// The contributor role.
@@ -324,7 +324,7 @@ pub struct Contributor {
     pub artist: ArtistID3,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Song {
     pub id: String,
@@ -384,7 +384,7 @@ pub struct Song {
 }
 
 /// A disc title for an album, with an optional cover art.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscTitle {
     /// The disc number.
@@ -396,7 +396,7 @@ pub struct DiscTitle {
 }
 
 /// A date for a media item that may be just a year, or year-month, or full date.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ItemDate {
     /// The year
     year: Option<u16>,
@@ -407,14 +407,14 @@ pub struct ItemDate {
 }
 
 /// A record label for an album.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RecordLabel {
     /// The record label name.
     name: String,
 }
 
 /// A genre in list of genres for an item
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ItemGenre {
     /// Genre name
     name: String,
@@ -499,7 +499,7 @@ pub struct ItemGenre {
 ///     ]
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbumID3 {
     /// The id of the album
@@ -586,7 +586,7 @@ pub struct AlbumID3 {
 ///   ]
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistID3 {
     /// The id of the artist.
