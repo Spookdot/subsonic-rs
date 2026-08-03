@@ -10,32 +10,70 @@ pub struct SubsonicError {
     pub message: String,
 }
 
+/// Subsonic Response without any additional information to be wrapped
+/// # Example
+/// ```
+/// # use subsonic::models::SubsonicBasicResponse;
+/// # serde_json::from_str::<SubsonicBasicResponse>(r#"
+/// {
+///     "subsonic-response": {
+///         "status": "ok",
+///         "version": "1.16.1"
+///     }
+/// }
+/// # "#);
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsonicBasicResponse {
+    /// Struct containing the actual data
     pub subsonic_response: SubsonicBasicData,
 }
 
+/// Subsonic Data without any additional information to be wrapped
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SubsonicBasicData {
+    /// The command result. `ok` or `failed`
     pub status: Box<str>,
-    pub version: Box<str>,
+    /// The server supported Subsonic API version.
+    pub version: Box<str>
 }
 
+/// OpenSubsonic Response without any additional information to be wrapped
+/// # Example
+/// ```
+/// # use subsonic::models::OpenSubsonicBasicResponse;
+/// # serde_json::from_str::<OpenSubsonicBasicResponse>(r#"
+/// {
+///     "subsonic-response": {
+///         "status": "ok",
+///         "version": "1.16.1",
+///         "type": "AwesomeServerName",
+///         "serverVersion": "0.1.3 (tag)",
+///         "openSubsonic": true
+///     }
+/// }
+/// # "#);
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct OpenSubsonicBasicResponse {
+    /// Struct containing the actual data
     pub subsonic_response: OpenSubsonicBasicData,
 }
 
+/// OpenSubsonic Data without any additional information to be wrapped
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenSubsonicBasicData {
+    /// The command result. `ok` or `failed`
     pub status: Box<str>,
+    /// The server supported Subsonic API version.
     pub version: Box<str>,
+    /// Must return true if the server supports OpenSubsonic API v1
     pub open_subsonic: bool,
+    /// The server actual version. \[Ex: `1.2.3 (beta)`\]
     pub server_version: Box<str>,
+    /// The server actual name. \[Ex: `Navidrome` or `gonic`\]
     #[serde(rename = "type")]
     pub type_: Box<str>,
 }

@@ -139,8 +139,11 @@ impl<T> SubsonicResponseTrait<T> for SubsonicResponse<T> {
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubsonicData<T> 
 {
+    /// The command result. `ok` or `failed`
     pub status: Box<str>,
+    /// The server supported Subsonic API version.
     pub version: Box<str>,
+    /// The nested Data provided in case of a success
     pub additional: T,
 }
 
@@ -396,11 +399,17 @@ impl<T> SubsonicResponseTrait<T> for OpenSubsonicResponse<T> {
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct OpenSubsonicData<T> 
 {
+    /// The command result. `ok` or `failed`
     pub status: Box<str>,
+    /// The server supported Subsonic API version.
     pub version: Box<str>,
+    /// Must return true if the server supports OpenSubsonic API v1
     pub open_subsonic: bool,
+    /// The server actual version. \[Ex: `1.2.3 (beta)`\]
     pub server_version: Box<str>,
+    /// The server actual name. \[Ex: `Navidrome` or `gonic`\]
     pub type_: Box<str>,
+    /// The nested Data provided in case of a success
     pub additional: T,
 }
 
