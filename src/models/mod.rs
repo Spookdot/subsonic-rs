@@ -350,9 +350,9 @@ pub struct SearchResult3 {
 #[serde(rename_all = "camelCase")]
 pub struct Work {
     /// The work name.
-    name: String,
+    pub name: String,
     /// The MusicBrainz Work ID.
-    music_brainz_id: Option<String>,
+    pub music_brainz_id: Option<String>,
 }
 
 /// A movement associated with a song.
@@ -360,11 +360,11 @@ pub struct Work {
 #[serde(rename_all = "camelCase")]
 pub struct Movement {
     /// The movement name.
-    name: String,
+    pub name: String,
     /// The movement number.
-    number: Option<u16>,
+    pub number: Option<u16>,
     /// The total number of movements.
-    count: Option<u16>,
+    pub count: Option<u16>,
 }
 
 /// The replay gain data of a song.
@@ -467,36 +467,36 @@ pub struct Song {
 #[serde(rename_all = "camelCase")]
 pub struct DiscTitle {
     /// The disc number.
-    disc: u16,
+    pub disc: u16,
     /// The nname of the disc.
-    title: String,
+    pub title: String,
     /// The cover art ID of the disc.
-    cover_art: Option<String>,
+    pub cover_art: Option<String>,
 }
 
 /// A date for a media item that may be just a year, or year-month, or full date.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ItemDate {
     /// The year
-    year: Option<u16>,
+    pub year: Option<u16>,
     /// The month (1-12)
-    month: Option<u16>,
+    pub month: Option<u16>,
     /// The day (1-31)
-    day: Option<u16>,
+    pub day: Option<u16>,
 }
 
 /// A record label for an album.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RecordLabel {
     /// The record label name.
-    name: String,
+    pub name: String,
 }
 
 /// A genre in list of genres for an item
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ItemGenre {
     /// Genre name
-    name: String,
+    pub name: String,
 }
 
 /// An album from ID3 tags.
