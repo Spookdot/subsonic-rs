@@ -239,6 +239,23 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional())
     }
+    pub async fn get_music_folders(&self) -> Result<MusicFolders, SubsonicError> {
+        let url = format!("{}/rest/getMusicFolders.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .send()
+            .await?;
+
+        
+        let subsonic_response: T::SubsonicResponse<MusicFolders> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
+
+        if subsonic_data.status() != "ok" {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_data.into_additional())
+    }
 }
 
 impl Client<OpenSubsonic> {

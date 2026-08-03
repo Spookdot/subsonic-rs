@@ -38,7 +38,7 @@ pub struct Search3Parameters {
     /// Search result offset for songs. Used for paging.
     pub song_offset: u32,
     /// (Since Subsonic 1.12.0) Only return results from music folder with the given ID. See
-    /// [`subsonic::Client::getMusicFolders()`](crate::Client::getMusicFolders()).
+    /// [`subsonic::Client::get_music_folders()`](crate::Client::get_music_folders()).
     pub music_folder_id: Option<Box<str>>,
 }
 

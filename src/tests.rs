@@ -245,3 +245,28 @@ async fn get_open_subsonic_extensions() {
     assert_eq!(song_lyrics_extension.versions[0], 1, "SongLyrics Extension Version 1 should be supported");
     assert_eq!(song_lyrics_extension.versions[1], 2, "SongLyrics Extension Version 2 should be supported");
 }
+
+#[tokio::test]
+async fn get_music_folders() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    
+    let music_folders = subsonic_client.get_music_folders().await.unwrap();
+    assert_eq!(music_folders.music_folder.len(), 1);
+    
+    let music_folder = music_folders.music_folder.first().unwrap();
+    assert_eq!(music_folder.id, 0);
+    assert_eq!(music_folder.name.as_deref(), "Music".into());
+
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    
+    let music_folders = subsonic_client.get_music_folders().await.unwrap();
+    assert_eq!(music_folders.music_folder.len(), 1);
+    
+    let music_folder = music_folders.music_folder.first().unwrap();
+    assert_eq!(music_folder.id, 1);
+    assert_eq!(music_folder.name.as_deref(), "Music Library".into());
+}

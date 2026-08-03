@@ -13,15 +13,14 @@ pub struct SubsonicError {
 /// Subsonic Response without any additional information to be wrapped
 /// # Example
 /// ```
-/// # use subsonic::models::SubsonicBasicResponse;
-/// # serde_json::from_str::<SubsonicBasicResponse>(r#"
+/// # serde_json::from_str::<subsonic::models::SubsonicBasicResponse>(r#"
 /// {
 ///     "subsonic-response": {
 ///         "status": "ok",
 ///         "version": "1.16.1"
 ///     }
 /// }
-/// # "#);
+/// # "#).unwrap();
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsonicBasicResponse {
@@ -42,8 +41,7 @@ pub struct SubsonicBasicData {
 /// OpenSubsonic Response without any additional information to be wrapped
 /// # Example
 /// ```
-/// # use subsonic::models::OpenSubsonicBasicResponse;
-/// # serde_json::from_str::<OpenSubsonicBasicResponse>(r#"
+/// # serde_json::from_str::<subsonic::models::OpenSubsonicBasicResponse>(r#"
 /// {
 ///     "subsonic-response": {
 ///         "status": "ok",
@@ -53,7 +51,7 @@ pub struct SubsonicBasicData {
 ///         "openSubsonic": true
 ///     }
 /// }
-/// # "#);
+/// # "#).unwrap();
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct OpenSubsonicBasicResponse {
@@ -85,6 +83,49 @@ pub struct OpenSubsonicExtension {
     pub name: Box<str>,
     /// The list of supported versions of this extension.
     pub versions: Vec<u32>,
+}
+
+/// MusicFolder
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::MusicFolder>(r#"
+/// {
+///     "id": 4,
+///     "name": "upload"
+/// }
+/// # "#).unwrap();
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicFolder {
+    /// The id
+    pub id: u32,
+    /// The folder name
+    pub name: Option<Box<str>>
+}
+
+/// MusicFolders.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::MusicFolders>(r#"
+/// {
+///     "musicFolder": [
+///         {
+///             "id": 1,
+///             "name": "music"
+///         },
+///         {
+///             "id": 4,
+///             "name": "upload"
+///         }
+///     ]
+/// }
+/// # "#).unwrap();
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicFolders {
+    /// The folders
+    #[serde(default)]
+    pub music_folder: Vec<MusicFolder>
 }
 
 /// A word or syllable cue within a cueLine.
