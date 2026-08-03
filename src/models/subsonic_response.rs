@@ -657,6 +657,6 @@ mod tests {
   }
 
         "#).unwrap();
-        assert_eq!(data.additional.artist[0].id, "37ec820ca7193e17040c98f7da7c4b51");
+        assert_eq!(data.additional.artist[0].id, "37ec820ca7193e17040c98f7da7c4b51".into());
     }
 }

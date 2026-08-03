@@ -203,7 +203,7 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(response.json().await?)
     }
-    pub async fn get_song(&self, id: &str) -> Result<Song, SubsonicError> {
+    pub async fn get_song(&self, id: &str) -> Result<Child, SubsonicError> {
         let url = format!("{}/rest/getSong.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -212,7 +212,7 @@ impl<T: SubsonicServerInfo> Client<T> {
             .await?;
 
         // TODO fix the type mess
-        let subsonic_response: T::SubsonicResponse<Song> = response.json().await?;
+        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
         if subsonic_data.status() != "ok" {

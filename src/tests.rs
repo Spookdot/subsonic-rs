@@ -64,7 +64,7 @@ async fn search3() {
     let search3_response = subsonic_client.search3(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
 
     assert_eq!(search3_response.album.len(), 1, "{:#?}", search3_response);
-    assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer", "{:#?}", search3_response);
+    assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer".into(), "{:#?}", search3_response);
     // TODO add Navidrome test
 }
 
