@@ -14,7 +14,8 @@ pub trait SubsonicDataTrait<T> {
     fn into_additional(self) -> T;
 }
 
-/// Representation of a full [`subsonic-response`](https://opensubsonic.netlify.app/docs/responses/subsonic-response/) 
+/// Subsonic representation of a full 
+/// [`subsonic-response`](https://opensubsonic.netlify.app/docs/responses/subsonic-response/) 
 /// with nested data that implements [`Deserialize`]
 ///
 /// Used in combination with the other Response Types for Subsonic to Deserialize Subsonic's JSON
@@ -87,7 +88,7 @@ impl<T> SubsonicResponseTrait<T> for SubsonicResponse<T> {
     }
 }
 
-/// Wrapper around a Struct that implements [`Deserialize`]
+/// Wrapper around a Struct that implements [`Deserialize`] for Subsonic
 ///
 /// Used in combination with the other Response Types for Subsonic to Deserialize Subsonic's JSON
 /// responses
@@ -253,6 +254,71 @@ where
     }
 }
 
+/// OpenSubsonic representation of a full 
+/// [`subsonic-response`](https://opensubsonic.netlify.app/docs/responses/subsonic-response/) 
+/// with nested data that implements [`Deserialize`]
+///
+/// Used in combination with the other Response Types for Subsonic to Deserialize Subsonic's JSON
+/// responses
+/// # Example
+/// The following response with a nested [`license`](crate::models::License) element:
+/// ```json
+/// {
+///     "subsonic-response": {
+///         "status": "ok",
+///         "version": "1.16.1",
+///         "type": "AwesomeServerName",
+///         "serverVersion": "0.1.3 (tag)",
+///         "openSubsonic": true,
+///         "license": {
+///             "valid": true,
+///             "email": "demo@demo.org",
+///             "licenseExpires": "2017-04-11T10:42:50.842Z",
+///             "trialExpires": "2017-04-11T10:42:50.842Z"
+///         }
+///     }
+/// }
+/// ```
+/// results in a case of `OpenSubsonicResponse` with a nested [`License`](crate::models::License) struct
+/// ```rust
+/// # use subsonic::models::{OpenSubsonicResponse, OpenSubsonicData, License};
+/// #
+/// # let data: OpenSubsonicResponse<License> = serde_json::from_str(r#"
+/// #     {
+/// #         "subsonic-response": {
+/// #             "status": "ok",
+/// #             "version": "1.16.1",
+/// #             "type": "AwesomeServerName",
+/// #             "serverVersion": "0.1.3 (tag)",
+/// #             "openSubsonic": true,
+/// #             "license": {
+/// #                 "valid": true,
+/// #                 "email": "demo@demo.org",
+/// #                 "licenseExpires": "2017-04-11T10:42:50.842Z",
+/// #                 "trialExpires": "2017-04-11T10:42:50.842Z"
+/// #             }
+/// #         }
+/// #     }
+/// # "#).unwrap();
+/// # let tester = 
+/// OpenSubsonicResponse::<License> {
+///     subsonic_response: OpenSubsonicData::<License> {
+///         status: "ok".into(),
+///         version: "1.16.1".into(),
+///         type_: "AwesomeServerName".into(),
+///         server_version: "0.1.3 (tag)".into(),
+///         open_subsonic: true,
+///         additional: License {
+///             valid: true,
+///             email: "demo@demo.org".into(),
+///             license_expires: "2017-04-11T10:42:50.842Z".into(),
+///             trial_expires: "2017-04-11T10:42:50.842Z".into()
+///         }
+///     }
+/// }
+/// # ;
+/// # assert_eq!(data, tester);
+/// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct OpenSubsonicResponse<T> 
@@ -270,6 +336,63 @@ impl<T> SubsonicResponseTrait<T> for OpenSubsonicResponse<T> {
     }
 }
 
+/// Wrapper around a Struct that implements [`Deserialize`] for OpenSubsonic
+///
+/// Used in combination with the other Response Types for Subsonic to Deserialize Subsonic's JSON
+/// responses
+/// # Example
+/// The following response with a nested [`license`](crate::models::License) element:
+/// ```json
+/// {
+///     "status": "ok",
+///     "version": "1.16.1",
+///     "type": "AwesomeServerName",
+///     "serverVersion": "0.1.3 (tag)",
+///     "openSubsonic": true,
+///     "license": {
+///         "valid": true,
+///         "email": "demo@demo.org",
+///         "licenseExpires": "2017-04-11T10:42:50.842Z",
+///         "trialExpires": "2017-04-11T10:42:50.842Z"
+///     }
+/// }
+/// ```
+/// results in a case of `OpenSubsonicData` with a nested [`License`](crate::models::License) struct
+/// ```rust
+/// # use subsonic::models::{OpenSubsonicData, License};
+/// #
+/// # let data: OpenSubsonicData<License> = serde_json::from_str(r#"
+/// #     {
+/// #         "status": "ok",
+/// #         "version": "1.16.1",
+/// #         "type": "AwesomeServerName",
+/// #         "serverVersion": "0.1.3 (tag)",
+/// #         "openSubsonic": true,
+/// #         "license": {
+/// #             "valid": true,
+/// #             "email": "demo@demo.org",
+/// #             "licenseExpires": "2017-04-11T10:42:50.842Z",
+/// #             "trialExpires": "2017-04-11T10:42:50.842Z"
+/// #         }
+/// #     }
+/// # "#).unwrap();
+/// # let tester = 
+/// OpenSubsonicData::<License> {
+///     status: "ok".into(),
+///     version: "1.16.1".into(),
+///     type_: "AwesomeServerName".into(),
+///     server_version: "0.1.3 (tag)".into(),
+///     open_subsonic: true,
+///     additional: License {
+///         valid: true,
+///         email: "demo@demo.org".into(),
+///         license_expires: "2017-04-11T10:42:50.842Z".into(),
+///         trial_expires: "2017-04-11T10:42:50.842Z".into()
+///     }
+/// }
+/// # ;
+/// # assert_eq!(data, tester);
+/// ```
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct OpenSubsonicData<T> 
 {
