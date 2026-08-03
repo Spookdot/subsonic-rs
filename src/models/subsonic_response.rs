@@ -14,7 +14,62 @@ pub trait SubsonicDataTrait<T> {
     fn into_additional(self) -> T;
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+/// Representation of a full [`subsonic-response`](https://opensubsonic.netlify.app/docs/responses/subsonic-response/) 
+/// with nested data that implements [`Deserialize`]
+///
+/// Used in combination with the other Response Types for Subsonic to Deserialize Subsonic's JSON
+/// responses
+/// # Example
+/// The following response with a nested [`license`](crate::models::License) element:
+/// ```json
+/// {
+///     "subsonic-response": {
+///         "status": "ok",
+///         "version": "1.16.1",
+///         "license": {
+///             "valid": true,
+///             "email": "demo@demo.org",
+///             "licenseExpires": "2017-04-11T10:42:50.842Z",
+///             "trialExpires": "2017-04-11T10:42:50.842Z"
+///         }
+///     }
+/// }
+/// ```
+/// results in a case of `SubsonicResponse` with a nested [`License`](crate::models::License) struct
+/// ```rust
+/// # use subsonic::models::{SubsonicResponse, SubsonicData, License};
+/// #
+/// # let data: SubsonicResponse<License> = serde_json::from_str(r#"
+/// #     {
+/// #         "subsonic-response": {
+/// #             "status": "ok",
+/// #             "version": "1.16.1",
+/// #             "license": {
+/// #                 "valid": true,
+/// #                 "email": "demo@demo.org",
+/// #                 "licenseExpires": "2017-04-11T10:42:50.842Z",
+/// #                 "trialExpires": "2017-04-11T10:42:50.842Z"
+/// #             }
+/// #         }
+/// #     }
+/// # "#).unwrap();
+/// # let tester = 
+/// SubsonicResponse::<License> {
+///     subsonic_response: SubsonicData::<License> {
+///         status: "ok".into(),
+///         version: "1.16.1".into(),
+///         additional: License {
+///             valid: true,
+///             email: "demo@demo.org".into(),
+///             license_expires: "2017-04-11T10:42:50.842Z".into(),
+///             trial_expires: "2017-04-11T10:42:50.842Z".into()
+///         }
+///     }
+/// }
+/// # ;
+/// # assert_eq!(data, tester);
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsonicResponse<T> 
 {
@@ -32,7 +87,55 @@ impl<T> SubsonicResponseTrait<T> for SubsonicResponse<T> {
     }
 }
 
-#[derive(Serialize, Clone, Debug)]
+/// Wrapper around a Struct that implements [`Deserialize`]
+///
+/// Used in combination with the other Response Types for Subsonic to Deserialize Subsonic's JSON
+/// responses
+/// # Example
+/// The following response with a nested [`license`](crate::models::License) element:
+/// ```json
+/// {
+///     "status": "ok",
+///     "version": "1.16.1",
+///     "license": {
+///         "valid": true,
+///         "email": "demo@demo.org",
+///         "licenseExpires": "2017-04-11T10:42:50.842Z",
+///         "trialExpires": "2017-04-11T10:42:50.842Z"
+///     }
+/// }
+/// ```
+/// results in a case of `SubsonicData` with a nested [`License`](crate::models::License) struct
+/// ```rust
+/// # use subsonic::models::{SubsonicData, License};
+/// #
+/// # let data: SubsonicData<License> = serde_json::from_str(r#"
+/// #     {
+/// #         "status": "ok",
+/// #         "version": "1.16.1",
+/// #         "license": {
+/// #             "valid": true,
+/// #             "email": "demo@demo.org",
+/// #             "licenseExpires": "2017-04-11T10:42:50.842Z",
+/// #             "trialExpires": "2017-04-11T10:42:50.842Z"
+/// #         }
+/// #     }
+/// # "#).unwrap();
+/// # let tester = 
+/// SubsonicData::<License> {
+///     status: "ok".into(),
+///     version: "1.16.1".into(),
+///     additional: License {
+///         valid: true,
+///         email: "demo@demo.org".into(),
+///         license_expires: "2017-04-11T10:42:50.842Z".into(),
+///         trial_expires: "2017-04-11T10:42:50.842Z".into()
+///     }
+/// }
+/// # ;
+/// # assert_eq!(data, tester);
+/// ```
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubsonicData<T> 
 {
     pub status: Box<str>,
@@ -150,7 +253,7 @@ where
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct OpenSubsonicResponse<T> 
 {
@@ -167,7 +270,7 @@ impl<T> SubsonicResponseTrait<T> for OpenSubsonicResponse<T> {
     }
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct OpenSubsonicData<T> 
 {
     pub status: Box<str>,
