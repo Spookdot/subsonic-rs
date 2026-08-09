@@ -7,6 +7,11 @@ struct SubsonicLogin<'a> {
     password: &'a str,
 }
 
+struct SubsonicLoginViaToken<'a> {
+    url: &'a str,
+    token: &'a str,
+}
+
 // Navidrome Demo (OpenSubsonic)
 const NAVIDROME: SubsonicLogin = SubsonicLogin { 
     url: "https://demo.navidrome.org", 
@@ -19,6 +24,11 @@ const SUBSONIC: SubsonicLogin = SubsonicLogin {
     url: "http://demo.subsonic.org", 
     username: "guest4", 
     password: "guest" 
+};
+
+const AMPACHE: SubsonicLoginViaToken = SubsonicLoginViaToken {
+    url: "https://demo.ampache.dev",
+    token: "demodemo"
 };
 
 #[tokio::test]
@@ -37,6 +47,13 @@ async fn ping() {
 
     let ping_response = subsonic_client.ping().await.unwrap();
     assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let ping_response = subsonic_client.ping().await.unwrap();
+    assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
 }
 
 #[tokio::test]
@@ -51,6 +68,13 @@ async fn get_license() {
     // For Navidrome
     let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    let license = subsonic_client.get_license().await.unwrap();
+    assert!(license.valid, "{:#?}", license);
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
 
     let license = subsonic_client.get_license().await.unwrap();
     assert!(license.valid, "{:#?}", license);
@@ -74,6 +98,15 @@ async fn search2() {
     
     assert_eq!(search2_response.artist.len(), 1);
     assert_eq!(search2_response.artist[0].name.as_ref(), "Pavel Tukki");
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let search2_response = subsonic_client.search2(Search3Parameters::query("Crust")).await.unwrap();
+    
+    assert_eq!(search2_response.artist.len(), 1);
+    assert_eq!(search2_response.artist[0].name.as_ref(), "Crust");
 }
 
 #[tokio::test]
@@ -86,6 +119,7 @@ async fn search3() {
 
     assert_eq!(search3_response.album.len(), 1, "{:#?}", search3_response);
     assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer".into(), "{:#?}", search3_response);
+
     // For Navidrome
     let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
@@ -94,6 +128,15 @@ async fn search3() {
     
     assert_eq!(search3_response.artist.len(), 1);
     assert_eq!(search3_response.artist[0].name.as_ref(), "Pavel Tukki");
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let search3_response = subsonic_client.search3(Search3Parameters::query("Crust")).await.unwrap();
+    
+    assert_eq!(search3_response.artist.len(), 1);
+    assert_eq!(search3_response.artist[0].name.as_ref(), "Crust");
 }
 
 #[tokio::test]
@@ -186,6 +229,51 @@ async fn star_unstar_song() {
         assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
 
     }
+
+    // Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    // Search Song
+    let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
+
+    let song = search3_response.song[0].to_owned();
+    let song_id = song.id;
+    // Check if starred
+    if song.starred.is_some() {
+        // Unstar if starred
+        let starred_response = client.unstar(StarParameters::id(song_id.clone())).await.unwrap();
+        assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
+
+        // Check if unstarred
+        let song = client.get_song(&song_id).await.unwrap();
+        assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
+
+        // Star after unstarring
+        let starred_response = client.star(StarParameters::id(song_id.clone())).await.unwrap();
+        assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
+
+        // Check if starred
+        let song = client.get_song(&song_id).await.unwrap();
+        assert!(song.starred.is_some(), "Song should be starred after Star method was called");
+    } else {
+        // Star if unstarred
+        let starred_response = client.star(StarParameters::id(song_id.clone())).await.unwrap();
+        assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
+
+        // Check if starred
+        let song = client.get_song(&song_id).await.unwrap();
+        assert!(song.starred.is_some(), "Song should be starred after Star method was called");
+
+        // Unstar after starring
+        let starred_response = client.unstar(StarParameters::id(song_id.clone())).await.unwrap();
+        assert_eq!(starred_response.subsonic_response.status.as_ref(), "ok");
+
+        // Check if unstarred
+        let song = client.get_song(&song_id).await.unwrap();
+        assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
+
+    }
 }
 
 #[tokio::test]
@@ -226,6 +314,8 @@ async fn get_lyrics() {
     assert_eq!(get_lyrics_response.title, "Letting You".into(), "The titles don't match for Navidrome Title and Artist");
     assert_eq!(get_lyrics_response.artist, "Nine Inch Nails".into(), "The artists don't match for Navidrome Title and Artist");
     assert!(!get_lyrics_response.value.is_empty(), "Lyrics should not be empty for Navidrome Title and Artist");
+
+    // TODO add case for Ampache
 }
 
 #[tokio::test]
@@ -241,6 +331,8 @@ async fn get_lyrics_by_song_id() {
     assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", &lyrics.display_title);
     assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", &lyrics.display_artist);
     assert_eq!(lyrics.line[0].value.as_ref(), "Letting You", "Got {:?} instead of the lyric \"Letting You\"", lyrics.line[0].value);
+
+    // TODO add case for Ampache
 }
 
 #[tokio::test]
@@ -257,6 +349,8 @@ async fn get_lyrics_by_song_id_enhanced() {
     assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", &lyrics.display_artist);
     assert_eq!(lyrics.kind, Some(StructuredLyricsKind::Main));
     assert_eq!(lyrics.line[0].value.as_ref(), "Letting You", "Got {:?} instead of the lyric \"Letting You\"", lyrics.line[0].value);
+
+    // TODO add case for Ampache
 }
 
 #[tokio::test]
@@ -272,6 +366,13 @@ async fn get_open_subsonic_extensions() {
     // Check that both versions of the songLyrics extension are supported
     assert_eq!(song_lyrics_extension.versions[0], 1, "SongLyrics Extension Version 1 should be supported");
     assert_eq!(song_lyrics_extension.versions[1], 2, "SongLyrics Extension Version 2 should be supported");
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let extensions = subsonic_client.get_open_subsonic_extensions().await.unwrap();
+    assert_ne!(extensions.len(), 0, "No OpenSubsonic Extensions supported");
 }
 
 #[tokio::test]
@@ -297,4 +398,8 @@ async fn get_music_folders() {
     let music_folder = music_folders.music_folder.first().unwrap();
     assert_eq!(music_folder.id, 1);
     assert_eq!(music_folder.name.as_deref(), "Music Library".into());
+
+    // Ampache skipped because it implements getMusicFolders incorrectly
+    // It returns a string for id when id should be an int
+    // See: https://opensubsonic.netlify.app/docs/responses/musicfolder/
 }
