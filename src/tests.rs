@@ -57,6 +57,26 @@ async fn get_license() {
 }
 
 #[tokio::test]
+async fn search2() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let search2_response = subsonic_client.search2(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
+
+    assert_eq!(search2_response.album.len(), 1, "{:#?}", search2_response);
+    assert_eq!(search2_response.album[0].album.as_deref(), Some("A Million Ways To Waste A Summer"), "{:#?}", search2_response);
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    let search2_response = subsonic_client.search2(Search3Parameters::query("Pavel Tukki")).await.unwrap();
+    
+    assert_eq!(search2_response.artist.len(), 1);
+    assert_eq!(search2_response.artist[0].name.as_ref(), "Pavel Tukki");
+}
+
+#[tokio::test]
 async fn search3() {
     // For Subsonic
     let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");

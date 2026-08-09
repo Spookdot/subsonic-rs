@@ -123,6 +123,24 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional())
     }
+    pub async fn search2(&self, parameters: Search3Parameters) -> Result<T::SearchResult2, SubsonicError> {
+        let url = format!("{}/rest/search2.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        
+        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
+
+        if subsonic_data.status() != "ok" {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_data.into_additional())
+    }
     pub async fn search3(&self, parameters: Search3Parameters) -> Result<T::SearchResult3, SubsonicError> {
         let url = format!("{}/rest/search3.view", self.url);
         let response = self.client.get(url)

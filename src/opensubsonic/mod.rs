@@ -16,6 +16,7 @@ impl SubsonicServerInfo for OpenSubsonic {
     type BasicResponse = OpenSubsonicBasicResponse;
     type SubsonicResponse<T: DeserializeOwned> = OpenSubsonicResponse<T>;
     type SearchResult3 = SearchResult3;
+    type SearchResult2 = SearchResult2;
     type Child = Child;
 }
 

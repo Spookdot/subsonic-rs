@@ -6,6 +6,35 @@ pub struct SubsonicError {
     pub message: String,
 }
 
+/// Artist details
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::Artist>(r#"
+/// {
+///   "id": "100000002",
+///   "name": "Synthetic",
+///   "coverArt": "ar-100000002",
+///   "starred": "2021-02-22T05:54:18Z"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Artist {
+    /// Artist id
+    pub id: Box<str>,
+    /// Artist name
+    pub name: Box<str>,
+    /// Artist image url
+    pub artist_image_url: Option<Box<str>>,
+    /// Artist starred date \[ISO 8601\]
+    pub starred: Option<Box<str>>,
+    /// Artist rating \[1-5\]
+    pub user_rating: Option<u32>,
+    /// Artist average rating \[1.0-5.0\]
+    pub average_rating: Option<f32>
+}
+
 /// MusicFolder
 /// # Example
 /// ```

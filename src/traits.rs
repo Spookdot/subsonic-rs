@@ -27,6 +27,11 @@ pub trait SubsonicServerInfo {
     /// See: [`subsonic::models::SearchResult3`](crate::subsonic::models::SearchResult3)
     /// and [`opensubsonic::models::SearchResult3`](crate::opensubsonic::models::SearchResult3)
     type SearchResult3: DeserializeOwned;
+    /// ReturnType for the [`Client::search2()`](crate::Client::search2()) method
+    ///
+    /// See: [`subsonic::models::SearchResult2`](crate::subsonic::models::SearchResult2)
+    /// and [`opensubsonic::models::SearchResult2`](crate::opensubsonic::models::SearchResult2)
+    type SearchResult2: DeserializeOwned;
     /// Type used to represent songs in the API
     /// For example method [`Client::get_song()`](crate::Client::get_song())
     ///

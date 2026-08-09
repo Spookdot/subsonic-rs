@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 /// Parameters for the [`subsonic::Client::search3()`](crate::Client::search3()) method
+/// and the [`subsonic::Client::search2()`](crate::Client::search2()) method
 /// ## Custom default
 /// This struct has a custom [`Default`](Search3Parameters::default) implementation returning the following default value:
 /// ```rust
