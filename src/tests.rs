@@ -1,3 +1,4 @@
+use super::opensubsonic::models::StructuredLyricsKind;
 use super::*;
 
 struct SubsonicLogin<'a> {

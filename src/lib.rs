@@ -37,17 +37,22 @@
 pub mod models;
 /// Parameter Structs for endpoints with more than one parameter
 pub mod parameters;
-/// Authentication components needed to make a connection to the Subsonic Server
+/// Structs related to the authentication with Subsonic Servers
 pub mod auth;
+/// OpenSubsonic exclusive methods and its associated types
+pub mod opensubsonic;
+/// Subsonic exclusive methods and its associated types
+pub mod subsonic;
+/// Traits to be used when implementing other derivatives of Subsonic
+pub mod traits;
 
 #[cfg(test)]
 mod tests;
 
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 use thiserror::Error;
 use crate::models::*;
 use crate::parameters::*;
+use crate::traits::*;
 use crate::auth::*;
 
 #[derive(Error, Debug)]
@@ -62,46 +67,6 @@ pub enum SubsonicError {
     Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
 }
 
-/// Utility Trait to contain information on the specific API
-pub trait SubsonicServerInfo {
-    /// Struct containing authentication query parameters to be sent with each request to the API
-    /// 
-    /// See: [`subsonic::auth`](crate::auth)
-    type SubsonicAuthentication: Serialize + SubsonicAuthenticationTrait;
-    /// ReturnType for endpoints that do not send back any additional information
-    /// For example [`Client::ping()`](crate::Client::ping())
-    /// 
-    /// See: [`models::SubsonicBasicResponse`] and [`models::OpenSubsonicBasicResponse`]
-    type BasicResponse: DeserializeOwned;
-    /// ReturnType for all other endpoints. Requires being able to take a Generic that implements
-    /// [`DeserializeOwned`]
-    /// 
-    /// For example `T::SubsonicResponse<SearchResult3>` for
-    /// [`Client::search3()`](crate::Client::search3()) so it can return
-    /// [`SearchResult3`]
-    /// 
-    /// See: [`models::SubsonicResponse`] and [`models::OpenSubsonicResponse`]
-    type SubsonicResponse<T: DeserializeOwned>: DeserializeOwned + SubsonicResponseTrait<T>;
-}
-/// Struct using the [`SubsonicServerInfo`] Trait to contain information specific to the Subsonic
-/// API
-pub struct Subsonic;
-/// Struct using the [`SubsonicServerInfo`] Trait to contain information specific to the OpenSubsonic
-/// API
-pub struct OpenSubsonic;
-
-impl SubsonicServerInfo for Subsonic {
-    type SubsonicAuthentication = SubsonicAuthentication;
-    type BasicResponse = SubsonicBasicResponse;
-    type SubsonicResponse<T: DeserializeOwned> = SubsonicResponse<T>;
-}
-
-impl SubsonicServerInfo for OpenSubsonic {
-    type SubsonicAuthentication = OpenSubsonicAuthentication;
-    type BasicResponse = OpenSubsonicBasicResponse;
-    type SubsonicResponse<T: DeserializeOwned> = OpenSubsonicResponse<T>;
-}
-
 /// A Client for the Subsonic API and OpenSubsonic
 pub struct Client<T: SubsonicServerInfo> {
     client: reqwest::Client,
@@ -110,9 +75,9 @@ pub struct Client<T: SubsonicServerInfo> {
     phantom: std::marker::PhantomData<T>
 }
 /// Alias to [`Client`] struct with only Subsonic supported APIs
-pub type SubsonicClient = Client<Subsonic>;
+pub type SubsonicClient = Client<subsonic::Subsonic>;
 /// Alias to [`Client`] struct with OpenSubsonic and Subsonic supported APIs
-pub type OpenSubsonicClient = Client<OpenSubsonic>;
+pub type OpenSubsonicClient = Client<opensubsonic::OpenSubsonic>;
 
 impl<T: SubsonicServerInfo> Client<T> {
     pub fn new(url: &str, parameters: SubsonicParameters<T::SubsonicAuthentication>) -> Self {
@@ -158,7 +123,7 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional())
     }
-    pub async fn search3(&self, parameters: Search3Parameters) -> Result<SearchResult3, SubsonicError> {
+    pub async fn search3(&self, parameters: Search3Parameters) -> Result<T::SearchResult3, SubsonicError> {
         let url = format!("{}/rest/search3.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -169,7 +134,7 @@ impl<T: SubsonicServerInfo> Client<T> {
         // TODO fix the type mess
         let url = response.url().to_owned();
         let response_text = response.text().await?;
-        let subsonic_response: T::SubsonicResponse<SearchResult3> = match serde_json::from_str(&response_text) {
+        let subsonic_response: T::SubsonicResponse<_> = match serde_json::from_str(&response_text) {
             Ok(success) => success,
             Err(error) => {
                 return Err(SubsonicError::Deserialization { url: url.as_str().into(), body: response_text.into(), serde_error: error });
@@ -203,7 +168,7 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(response.json().await?)
     }
-    pub async fn get_song(&self, id: &str) -> Result<Child, SubsonicError> {
+    pub async fn get_song(&self, id: &str) -> Result<T::Child, SubsonicError> {
         let url = format!("{}/rest/getSong.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -248,64 +213,6 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         
         let subsonic_response: T::SubsonicResponse<MusicFolders> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        if subsonic_data.status() != "ok" {
-            return Err(SubsonicError::Failed);
-        }
-
-        Ok(subsonic_data.into_additional())
-    }
-}
-
-impl Client<OpenSubsonic> {
-    pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError> {
-        // TODO account for OpenSubsonic Servers that don't implement the Extension
-        let url = format!("{}/rest/getLyricsBySongId.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("id", id)])
-            .send()
-            .await?;
-
-        
-        let subsonic_response: OpenSubsonicResponse<LyricsList> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        if subsonic_data.status() != "ok" {
-            return Err(SubsonicError::Failed);
-        }
-
-        Ok(subsonic_data.into_additional())
-    }
-    pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError> {
-        // TODO account for OpenSubsonic Servers that don't implement the Extension
-        let url = format!("{}/rest/getLyricsBySongId.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("id", id), ("enhanced", "true")])
-            .send()
-            .await?;
-
-        
-        let subsonic_response: OpenSubsonicResponse<EnhancedLyricsList> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        if subsonic_data.status() != "ok" {
-            return Err(SubsonicError::Failed);
-        }
-
-        Ok(subsonic_data.into_additional())
-    }
-    pub async fn get_open_subsonic_extensions(&self) -> Result<Vec<OpenSubsonicExtension>, SubsonicError> {
-        let url = format!("{}/rest/getOpenSubsonicExtensions.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: OpenSubsonicResponse<Vec<OpenSubsonicExtension>> = response.json().await?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
         if subsonic_data.status() != "ok" {
