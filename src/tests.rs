@@ -86,7 +86,14 @@ async fn search3() {
 
     assert_eq!(search3_response.album.len(), 1, "{:#?}", search3_response);
     assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer".into(), "{:#?}", search3_response);
-    // TODO add Navidrome test
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    let search3_response = subsonic_client.search3(Search3Parameters::query("Pavel Tukki")).await.unwrap();
+    
+    assert_eq!(search3_response.artist.len(), 1);
+    assert_eq!(search3_response.artist[0].name.as_ref(), "Pavel Tukki");
 }
 
 #[tokio::test]
