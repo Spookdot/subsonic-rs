@@ -16,6 +16,7 @@ impl SubsonicServerInfo for Subsonic {
     type SubsonicResponse<T: DeserializeOwned> = SubsonicResponse<T>;
     type SearchResult3 = SearchResult3;
     type SearchResult2 = SearchResult2;
+    type SearchResult = SearchResult;
     type Child = Child;
 }
 

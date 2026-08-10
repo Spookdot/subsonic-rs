@@ -123,6 +123,26 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional())
     }
+    /// DEPRECATED endpoint included for compatibility reasons. 
+    /// Please consider using [`Client::search2()`] or [`Client::search3()`] instead
+    pub async fn search(&self, parameters: SearchParameters) -> Result<T::SearchResult, SubsonicError> {
+        let url = format!("{}/rest/search.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        
+        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
+
+        if subsonic_data.status() != "ok" {
+            return Err(SubsonicError::Failed);
+        }
+
+        Ok(subsonic_data.into_additional())
+    }
     pub async fn search2(&self, parameters: Search3Parameters) -> Result<T::SearchResult2, SubsonicError> {
         let url = format!("{}/rest/search2.view", self.url);
         let response = self.client.get(url)

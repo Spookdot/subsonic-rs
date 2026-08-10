@@ -1,5 +1,76 @@
 use serde::Serialize;
 
+/// Parameters for the **deprecated** [`subsonic::Client::search()`](crate::Client::search()) method
+/// ## Custom default
+/// This struct has a custom [`Default`](SearchParameters::default) implementation returning the following default value:
+/// ```rust
+/// # use subsonic::parameters::SearchParameters;
+/// # let tester = SearchParameters::default();
+/// # let default =
+/// SearchParameters {
+///     artist: "".into(),
+///     album: "".into(),
+///     title: "".into(),
+///     any: "".into(),
+///     count: 20,
+///     offset: 0,
+///     newer_than: None,
+/// }
+/// # ;
+/// # assert_eq!(default, tester);
+/// ```
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchParameters {
+    /// Artist to search for.
+    #[serde(skip_serializing_if = "str::is_empty")]
+    pub artist: Box<str>,
+    /// Album to search for.
+    #[serde(skip_serializing_if = "str::is_empty")]
+    pub album: Box<str>,
+    /// Song title to search for.
+    #[serde(skip_serializing_if = "str::is_empty")]
+    pub title: Box<str>,
+    /// Searches all fields.
+    #[serde(skip_serializing_if = "str::is_empty")]
+    pub any: Box<str>,
+    /// Maximum number of results to return.
+    pub count: u32,
+    /// Search result offset. Used for paging.
+    pub offset: u32,
+    /// Only return matches newer than this. Given as milliseconds since 1970.
+    pub newer_than: Option<i32>,
+}
+
+impl SearchParameters {
+    pub fn artist(artist: impl Into<Box<str>>) -> Self {
+        Self { artist: artist.into(), ..Default::default() }
+    }
+    pub fn album(album: impl Into<Box<str>>) -> Self {
+        Self { album: album.into(), ..Default::default() }
+    }
+    pub fn title(title: impl Into<Box<str>>) -> Self {
+        Self { title: title.into(), ..Default::default() }
+    }
+    pub fn any(any: impl Into<Box<str>>) -> Self {
+        Self { any: any.into(), ..Default::default() }
+    }
+}
+
+impl Default for SearchParameters {
+    fn default() -> Self {
+        Self { 
+            artist: Default::default(), 
+            album: Default::default(), 
+            title: Default::default(), 
+            any: Default::default(), 
+            count: 20, 
+            offset: 0, 
+            newer_than: Default::default() 
+        }
+    }
+}
+
 /// Parameters for the [`subsonic::Client::search3()`](crate::Client::search3()) method
 /// and the [`subsonic::Client::search2()`](crate::Client::search2()) method
 /// ## Custom default

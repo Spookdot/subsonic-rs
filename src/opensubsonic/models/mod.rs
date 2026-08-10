@@ -80,6 +80,65 @@ pub struct OpenSubsonicExtension {
     pub versions: Vec<u32>,
 }
 
+/// searchResult
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::SearchResult>(r#"
+/// {
+///     "offset": 0,
+///     "totalHits": 7,
+///     "match": [
+///         {
+///             "id": "so-112",
+///             "parent": "al-76",
+///             "title": "Approaching Grave",
+///             "isDir": false,
+///             "isVideo": false,
+///             "type": "music",
+///             "albumId": "al-76",
+///             "album": "...and a Dirge Becomes an Anthem",
+///             "artistId": "ar-28",
+///             "artist": "Crust",
+///             "coverArt": "al-76",
+///             "duration": 320,
+///             "bitRate": 173,
+///             "userRating": 5,
+///             "playCount": 1939,
+///             "created": "2020-10-29T08:56:50Z",
+///             "starred": "2023-12-31T00:08:51Z",
+///             "track": 1,
+///             "year": 2020,
+///             "size": 7460619,
+///             "discNumber": 1,
+///             "suffix": "mp3",
+///             "contentType": "audio/mpeg",
+///             "path": "/mnt/music/demo/music/a-757/01 Approaching Grave.mp3",
+///             "artists": [
+///                 {
+///                     "id": "ar-28",
+///                     "name": "Crust"
+///                 }
+///             ],
+///             "albumArtists": [
+///                 {
+///                     "id": "ar-28",
+///                     "name": "Crust"
+///                 }
+///             ]
+///         }
+///     ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchResult {
+    pub offset: u32,
+    pub total_hits: u32,
+    #[serde(default, rename = "match")]
+    pub match_: Vec<Child>,
+}
+
 /// searchResult2
 /// # Example
 /// ```

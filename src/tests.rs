@@ -81,6 +81,28 @@ async fn get_license() {
 }
 
 #[tokio::test]
+async fn search() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let search_response = subsonic_client.search(SearchParameters::artist("PeerGynt Lobogris")).await.unwrap();
+
+    assert!(!search_response.match_.is_empty(), "{:#?}", search_response);
+    assert_eq!(search_response.match_[0].artist.as_deref(), Some("PeerGynt Lobogris"), "{:#?}", search_response);
+    // Navidrome doesn't support because deprecated
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let search_response = subsonic_client.search(SearchParameters::artist("Crust")).await.unwrap();
+    
+    assert!(!search_response.match_.is_empty(), "{:#?}", search_response);
+    assert_eq!(search_response.match_[0].artist.as_deref(), Some("Crust"), "{:#?}", search_response);
+}
+
+#[tokio::test]
 async fn search2() {
     // For Subsonic
     let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");

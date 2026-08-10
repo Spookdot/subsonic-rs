@@ -43,6 +43,50 @@ pub struct SubsonicBasicData {
     pub version: Box<str>
 }
 
+/// searchResult
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::subsonic::models::SearchResult>(r#"
+/// {
+///     "offset" : 0,
+///     "totalHits" : 41,
+///     "match" : [ 
+///         {
+///             "id" : "302",
+///             "parent" : "278",
+///             "isDir" : false,
+///             "title" : "PeerGynT - Old Tales",
+///             "album" : "Broken Dreams",
+///             "artist" : "PeerGynt Lobogris",
+///             "track" : 10,
+///             "year" : 2007,
+///             "genre" : "Blues",
+///             "coverArt" : "278",
+///             "size" : 3846272,
+///             "contentType" : "audio/mpeg",
+///             "suffix" : "mp3",
+///             "duration" : 237,
+///             "bitRate" : 128,
+///             "path" : "PeerGynt Lobogris/Broken Dreams/10 - 10 PeerGynT - Old Tales.mp3",
+///             "playCount" : 943,
+///             "created" : "2017-03-12T11:06:34.000Z",
+///             "albumId" : "32",
+///             "artistId" : "16",
+///             "type" : "music"
+///         } 
+///     ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchResult {
+    pub offset: u32,
+    pub total_hits: u32,
+    #[serde(default, rename = "match")]
+    pub match_: Vec<Child>,
+}
+
 /// searchResult2
 /// # Example
 /// ```
