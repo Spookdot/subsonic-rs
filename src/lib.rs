@@ -232,4 +232,19 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional()?)
     }
+    pub async fn create_user(&self, parameters: CreateUserParameters) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+        let url =  format!("{}/rest/createUser.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&parameters)
+            .send()
+            .await?;
+
+        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
+        if subsonic_response.subsonic_response().additional().is_err() {
+            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
+        }
+
+        Ok(subsonic_response)
+    }
 }

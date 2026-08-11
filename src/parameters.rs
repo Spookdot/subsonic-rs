@@ -339,3 +339,61 @@ impl GetLyricsParameters {
         }
     }
 }
+
+/// Parameters for the [`crate::Client<T>::create_user()`] method
+#[derive(Serialize, PartialEq, Eq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateUserParameters {
+    pub username: Box<str>,
+    pub password: Box<str>,
+    pub email: Box<str>,
+    pub ldap_authenticated: bool,
+    pub admin_role: bool,
+    pub settings_role: bool,
+    pub stream_role: bool,
+    pub jukebox_role: bool,
+    pub download_role: bool,
+    pub upload_role: bool,
+    pub playlist_role: bool,
+    pub cover_art_role: bool,
+    pub comment_role: bool,
+    pub podcast_role: bool,
+    pub share_role: bool,
+    pub video_conversion_role: bool,
+    pub music_folder_id: Option<u32>,
+}
+
+impl CreateUserParameters {
+    pub fn with_default_roles(email: impl Into<Box<str>>, username: impl Into<Box<str>>, password: impl Into<Box<str>>) -> Self {
+        Self {
+            email: email.into(),
+            username: username.into(),
+            password: password.into(),
+            ..Default::default()
+        }
+    }
+}
+
+impl Default for CreateUserParameters {
+    fn default() -> Self {
+        Self {
+            username: "".into(),
+            password: "".into(),
+            email: "".into(),
+            ldap_authenticated: false,
+            admin_role: false,
+            settings_role: true,
+            stream_role: true,
+            jukebox_role: false,
+            download_role: false,
+            upload_role: false,
+            playlist_role: false,
+            cover_art_role: false,
+            comment_role: false,
+            podcast_role: false,
+            share_role: false,
+            video_conversion_role: false,
+            music_folder_id: None,
+        }
+    }
+}

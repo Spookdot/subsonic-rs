@@ -425,3 +425,21 @@ async fn get_music_folders() {
     // It returns a string for id when id should be an int
     // See: https://opensubsonic.netlify.app/docs/responses/musicfolder/
 }
+
+#[tokio::test]
+async fn create_user() {
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let create_user_parameters = CreateUserParameters::with_default_roles("test", "test", "test");
+    let create_user_result = subsonic_client.create_user(create_user_parameters).await;
+
+    if let Err(SubsonicError::Failed(error_data)) = create_user_result {
+        assert_eq!(error_data.code, SubsonicErrorCode::NotAuthorized);
+        assert_eq!(error_data.message.as_ref(), "User is not authorized for the given operation.");
+        assert_eq!(error_data.help_url.as_deref(), Some("https://ampache.org/api/subsonic"));
+    } else {
+        panic!("createUser endpoint for Ampache should be returning an error, but isn't\n{create_user_result:#?}");
+    }
+}
