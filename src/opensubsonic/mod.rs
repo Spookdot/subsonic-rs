@@ -2,6 +2,7 @@ pub mod models;
 pub mod auth;
 
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use crate::{Client, SubsonicError};
 use crate::traits::*;
 use models::*;
@@ -14,7 +15,8 @@ pub struct OpenSubsonic;
 impl SubsonicServerInfo for OpenSubsonic {
     type SubsonicAuthentication = OpenSubsonicAuthentication;
     type BasicResponse = OpenSubsonicBasicResponse;
-    type SubsonicResponse<T: DeserializeOwned> = OpenSubsonicResponse<T>;
+    type SubsonicResponse<T: DeserializeOwned + Serialize> = OpenSubsonicResponse<T>;
+    type ErrorData = ErrorData;
     type SearchResult3 = SearchResult3;
     type SearchResult2 = SearchResult2;
     type SearchResult = SearchResult;
@@ -22,7 +24,7 @@ impl SubsonicServerInfo for OpenSubsonic {
 }
 
 impl Client<OpenSubsonic> {
-    pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError> {
+    pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError<ErrorData>> {
         // TODO account for OpenSubsonic Servers that don't implement the Extension
         let url = format!("{}/rest/getLyricsBySongId.view", self.url);
         let response = self.client.get(url)
@@ -32,16 +34,12 @@ impl Client<OpenSubsonic> {
             .await?;
 
         
-        let subsonic_response: OpenSubsonicResponse<LyricsList> = response.json().await?;
+        let subsonic_response: OpenSubsonicResponse<_> = response.json().await?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_data.status() != "ok" {
-            return Err(SubsonicError::Failed);
-        }
-
-        Ok(subsonic_data.into_additional())
+        Ok(subsonic_data.into_additional()?)
     }
-    pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError> {
+    pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError<ErrorData>> {
         // TODO account for OpenSubsonic Servers that don't implement the Extension
         let url = format!("{}/rest/getLyricsBySongId.view", self.url);
         let response = self.client.get(url)
@@ -51,16 +49,12 @@ impl Client<OpenSubsonic> {
             .await?;
 
         
-        let subsonic_response: OpenSubsonicResponse<EnhancedLyricsList> = response.json().await?;
+        let subsonic_response: OpenSubsonicResponse<_> = response.json().await?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_data.status() != "ok" {
-            return Err(SubsonicError::Failed);
-        }
-
-        Ok(subsonic_data.into_additional())
+        Ok(subsonic_data.into_additional()?)
     }
-    pub async fn get_open_subsonic_extensions(&self) -> Result<Vec<OpenSubsonicExtension>, SubsonicError> {
+    pub async fn get_open_subsonic_extensions(&self) -> Result<Vec<OpenSubsonicExtension>, SubsonicError<ErrorData>> {
         let url = format!("{}/rest/getOpenSubsonicExtensions.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -68,13 +62,9 @@ impl Client<OpenSubsonic> {
             .await?;
 
         
-        let subsonic_response: OpenSubsonicResponse<Vec<OpenSubsonicExtension>> = response.json().await?;
+        let subsonic_response: OpenSubsonicResponse<_> = response.json().await?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
-        if subsonic_data.status() != "ok" {
-            return Err(SubsonicError::Failed);
-        }
-
-        Ok(subsonic_data.into_additional())
+        Ok(subsonic_data.into_additional()?)
     }
 }

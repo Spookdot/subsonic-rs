@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize, de::{self, Visitor}};
-use crate::traits::{SubsonicResponseTrait, SubsonicDataTrait};
+use crate::{opensubsonic::models::ErrorData, traits::{SubsonicDataTrait, SubsonicResponseTrait}};
 
 /// OpenSubsonic representation of a full 
 /// [`subsonic-response`](https://opensubsonic.netlify.app/docs/responses/subsonic-response/) 
@@ -56,12 +56,12 @@ use crate::traits::{SubsonicResponseTrait, SubsonicDataTrait};
 ///         type_: "AwesomeServerName".into(),
 ///         server_version: "0.1.3 (tag)".into(),
 ///         open_subsonic: true,
-///         additional: License {
+///         additional: Ok(License {
 ///             valid: true,
 ///             email: "demo@demo.org".into(),
 ///             license_expires: "2017-04-11T10:42:50.842Z".into(),
 ///             trial_expires: "2017-04-11T10:42:50.842Z".into()
-///         }
+///         })
 ///     }
 /// }
 /// # ;
@@ -69,13 +69,13 @@ use crate::traits::{SubsonicResponseTrait, SubsonicDataTrait};
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
-pub struct OpenSubsonicResponse<T> 
+pub struct OpenSubsonicResponse<T: Serialize> 
 {
     pub subsonic_response: OpenSubsonicData<T>,
 }
 
 #[allow(refining_impl_trait)]
-impl<T> SubsonicResponseTrait<T> for OpenSubsonicResponse<T> {
+impl<T: Serialize> SubsonicResponseTrait<T, ErrorData> for OpenSubsonicResponse<T> {
     fn subsonic_response(&self) -> &OpenSubsonicData<T> {
         &self.subsonic_response
     }
@@ -132,18 +132,71 @@ impl<T> SubsonicResponseTrait<T> for OpenSubsonicResponse<T> {
 ///     type_: "AwesomeServerName".into(),
 ///     server_version: "0.1.3 (tag)".into(),
 ///     open_subsonic: true,
-///     additional: License {
+///     additional: Ok(License {
 ///         valid: true,
 ///         email: "demo@demo.org".into(),
 ///         license_expires: "2017-04-11T10:42:50.842Z".into(),
 ///         trial_expires: "2017-04-11T10:42:50.842Z".into()
+///     })
+/// }
+/// # ;
+/// # assert_eq!(data, tester);
+/// ```
+/// # Error Example
+/// The following response which contains an error:
+/// ```json
+/// {
+///     "status": "ok",
+///     "version": "1.16.1",
+///     "type": "AwesomeServerName",
+///     "serverVersion": "0.1.3 (tag)",
+///     "openSubsonic": true,
+///     "error": {
+///         "code": 42,
+///         "message": "Authentication mechanism not supported. Use API keys",
+///         "helpUrl": "https://example.org/users/apiKey"
 ///     }
+/// }
+/// ```
+/// results in a case of `OpenSubsonicData` with a nested [`ErrorData`](crate::opensubsonic::models::ErrorData) struct
+/// ```rust
+/// # use subsonic::opensubsonic::models::OpenSubsonicData;
+/// # use subsonic::opensubsonic::models::ErrorData;
+/// # use subsonic::models::SubsonicErrorCode;
+/// # use subsonic::models::License;
+/// #
+/// # let data: OpenSubsonicData<License> = serde_json::from_str(r#"
+/// # {
+/// #     "status": "ok",
+/// #     "version": "1.16.1",
+/// #     "type": "AwesomeServerName",
+/// #     "serverVersion": "0.1.3 (tag)",
+/// #     "openSubsonic": true,
+/// #     "error": {
+/// #         "code": 42,
+/// #         "message": "Authentication mechanism not supported. Use API keys",
+/// #         "helpUrl": "https://example.org/users/apiKey"
+/// #     }
+/// # }
+/// # "#).unwrap();
+/// # let tester = 
+/// OpenSubsonicData::<License> {
+///     status: "ok".into(),
+///     version: "1.16.1".into(),
+///     type_: "AwesomeServerName".into(),
+///     server_version: "0.1.3 (tag)".into(),
+///     open_subsonic: true,
+///     additional: Err(ErrorData {
+///         code: SubsonicErrorCode::AuthMechanismNotSupported,
+///         message: "Authentication mechanism not supported. Use API keys".into(),
+///         help_url: Some("https://example.org/users/apiKey".into()),
+///     })
 /// }
 /// # ;
 /// # assert_eq!(data, tester);
 /// ```
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
-pub struct OpenSubsonicData<T> 
+pub struct OpenSubsonicData<T: Serialize> 
 {
     /// The command result. `ok` or `failed`
     pub status: Box<str>,
@@ -156,28 +209,45 @@ pub struct OpenSubsonicData<T>
     /// The server actual name. \[Ex: `Navidrome` or `gonic`\]
     pub type_: Box<str>,
     /// The nested Data provided in case of a success
-    pub additional: T,
+    pub additional: Result<T, ErrorData>,
 }
 
-impl<T> SubsonicDataTrait<T> for OpenSubsonicData<T> {
+impl<T: Serialize> SubsonicDataTrait<T, ErrorData> for OpenSubsonicData<T> {
     fn status(&self) -> &str {
         &self.status
     }
     fn version(&self) -> &str {
         &self.version
     }
-    fn additional(&self) -> &T {
-        &self.additional
+    fn additional(&self) -> Result<&T, &ErrorData> {
+        self.additional.as_ref()
     }
-    fn into_additional(self) -> T {
+    fn into_additional(self) -> Result<T, ErrorData> {
         self.additional
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(untagged)]
+enum UntaggedResult<D> {
+    Ok(D),
+    Err(ErrorData),
+}
+
+impl<D> From<UntaggedResult<D>> for Result<D, ErrorData> {
+    fn from(val: UntaggedResult<D>) -> Self {
+        match val {
+            UntaggedResult::Ok(v) => Ok(v),
+            UntaggedResult::Err(v) => Err(v)
+        }
     }
 }
 
 impl<'de, T> Deserialize<'de> for OpenSubsonicData<T> 
 where 
-    T: de::Deserialize<'de>
+    T: de::Deserialize<'de> + Serialize
 {
+
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de> 
@@ -223,7 +293,7 @@ where
 
         impl<'de, T> Visitor<'de> for FoobarVisitor<T>
         where
-            T: de::Deserialize<'de>
+            T: de::Deserialize<'de> + Serialize
         {
             type Value = OpenSubsonicData<T>;
 
@@ -240,7 +310,7 @@ where
                 let mut open_subsonic = None;
                 let mut server_version = None;
                 let mut type_ = None;
-                let mut additional = None;
+                let mut additional: Option<UntaggedResult<T>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Status => {
@@ -287,7 +357,7 @@ where
                 let server_version = server_version.ok_or_else(|| de::Error::missing_field("server_version"))?;
                 let type_ = type_.ok_or_else(|| de::Error::missing_field("type_"))?;
                 let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
-                Ok(OpenSubsonicData { status, version, open_subsonic, server_version, type_, additional })
+                Ok(OpenSubsonicData { status, version, open_subsonic, server_version, type_, additional: additional.into() })
             }
         }
 

@@ -2,6 +2,7 @@ pub mod models;
 pub mod auth;
 
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use crate::traits::SubsonicServerInfo;
 use models::*;
 use auth::*;
@@ -13,7 +14,8 @@ pub struct Subsonic;
 impl SubsonicServerInfo for Subsonic {
     type SubsonicAuthentication = SubsonicAuthentication;
     type BasicResponse = SubsonicBasicResponse;
-    type SubsonicResponse<T: DeserializeOwned> = SubsonicResponse<T>;
+    type SubsonicResponse<T: DeserializeOwned + Serialize> = SubsonicResponse<T>;
+    type ErrorData = ErrorData;
     type SearchResult3 = SearchResult3;
     type SearchResult2 = SearchResult2;
     type SearchResult = SearchResult;

@@ -1,9 +1,21 @@
 mod response;
 
 pub use response::*;
-use crate::models::Artist;
+
+use crate::models::{Artist, SubsonicErrorCode};
+use crate::traits::ErrorDataTrait;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ErrorData {
+    pub code: SubsonicErrorCode,
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub message: Box<str>,
+}
+
+impl ErrorDataTrait for ErrorData {}
 
 /// Subsonic Response without any additional information to be wrapped
 /// # Example

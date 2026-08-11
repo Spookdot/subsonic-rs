@@ -1,12 +1,25 @@
 mod structured_lyrics;
 mod response;
 
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 pub use structured_lyrics::*;
 pub use response::*;
 
+use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
+use crate::models::SubsonicErrorCode;
 use crate::models::Artist;
+use crate::traits::ErrorDataTrait;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ErrorData {
+    pub code: SubsonicErrorCode,
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub message: Box<str>,
+    pub help_url: Option<Box<str>>,
+}
+
+impl ErrorDataTrait for ErrorData {}
 
 /// OpenSubsonic Response without any additional information to be wrapped
 /// # Example

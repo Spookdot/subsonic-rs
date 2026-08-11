@@ -16,3 +16,4 @@ uuid = { version = "1.23", features = ["serde", "v4"] }
 serde_urlencoded = "0.7.1"
 http = "1.4"
 thiserror = "2.0.18"
+serde_repr = "0.1.21"

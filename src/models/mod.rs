@@ -1,9 +1,21 @@
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Serialize, Deserialize)]
-pub struct SubsonicError {
-    pub code: u8,
-    pub message: String,
+#[derive(Deserialize_repr, Serialize_repr, Clone, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum SubsonicErrorCode {
+    GenericError = 0,
+    MissingParameter = 10,
+    ClientUpgradeRequired = 20,
+    ServerUpgradeRequired = 30,
+    WrongLogin = 40,
+    NoTokenAuthForLdap = 41,
+    AuthMechanismNotSupported = 42,
+    MultipleAuthMechanisms = 43,
+    InvalidApiKey = 44,
+    NotAuthorized = 50,
+    TrialExpire = 60,
+    RequestDataNotFound = 70,
 }
 
 /// Artist details

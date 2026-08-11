@@ -11,7 +11,7 @@ pub trait SubsonicServerInfo {
     /// 
     /// See: [`SubsonicBasicResponse`](crate::subsonic::models::SubsonicBasicResponse) 
     /// and [`OpenSubsonicBasicResponse`](crate::opensubsonic::models::OpenSubsonicBasicResponse)
-    type BasicResponse: DeserializeOwned;
+    type BasicResponse: Serialize + DeserializeOwned;
     /// ReturnType for all other endpoints. Requires being able to take a Generic that implements
     /// [`DeserializeOwned`]
     /// 
@@ -21,28 +21,29 @@ pub trait SubsonicServerInfo {
     /// 
     /// See: [`SubsonicResponse`](crate::subsonic::models::SubsonicResponse) 
     /// and [`OpenSubsonicResponse`](crate::opensubsonic::models::OpenSubsonicResponse)
-    type SubsonicResponse<T: DeserializeOwned>: DeserializeOwned + SubsonicResponseTrait<T>;
+    type SubsonicResponse<T: DeserializeOwned + Serialize>: DeserializeOwned + SubsonicResponseTrait<T, Self::ErrorData>;
+    type ErrorData: ErrorDataTrait;
     /// ReturnType for the [`Client::search3()`](crate::Client::search3()) method
     ///
     /// See: [`subsonic::models::SearchResult3`](crate::subsonic::models::SearchResult3)
     /// and [`opensubsonic::models::SearchResult3`](crate::opensubsonic::models::SearchResult3)
-    type SearchResult3: DeserializeOwned;
+    type SearchResult3: Serialize + DeserializeOwned;
     /// ReturnType for the [`Client::search2()`](crate::Client::search2()) method
     ///
     /// See: [`subsonic::models::SearchResult2`](crate::subsonic::models::SearchResult2)
     /// and [`opensubsonic::models::SearchResult2`](crate::opensubsonic::models::SearchResult2)
-    type SearchResult2: DeserializeOwned;
+    type SearchResult2: Serialize + DeserializeOwned;
     /// ReturnType for the [`Client::search()`](crate::Client::search()) method
     ///
     /// See: [`subsonic::models::SearchResult`](crate::subsonic::models::SearchResult)
     /// and [`opensubsonic::models::SearchResult`](crate::opensubsonic::models::SearchResult)
-    type SearchResult: DeserializeOwned;
+    type SearchResult: Serialize + DeserializeOwned;
     /// Type used to represent songs in the API
     /// For example method [`Client::get_song()`](crate::Client::get_song())
     ///
     /// See: [`subsonic::models::Child`](crate::subsonic::models::Child)
     /// and [`opensubsonic::models::Child`](crate::opensubsonic::models::Child)
-    type Child: DeserializeOwned;
+    type Child: Serialize + DeserializeOwned;
 }
 
 // TODO rename Trait
@@ -50,9 +51,9 @@ pub trait SubsonicServerInfo {
 ///
 /// See: [`SubsonicResponse`](crate::subsonic::models::SubsonicResponse) 
 /// and [`OpenSubsonicResponse`](crate::opensubsonic::models::OpenSubsonicResponse)
-pub trait SubsonicResponseTrait<T> {
-    fn subsonic_response(&self) -> &impl SubsonicDataTrait<T>;
-    fn into_subsonic_data(self) -> impl SubsonicDataTrait<T>;
+pub trait SubsonicResponseTrait<TData, TErrorData> {
+    fn subsonic_response(&self) -> &impl SubsonicDataTrait<TData, TErrorData>;
+    fn into_subsonic_data(self) -> impl SubsonicDataTrait<TData, TErrorData>;
 }
 
 // TODO rename Trait
@@ -60,11 +61,11 @@ pub trait SubsonicResponseTrait<T> {
 ///
 /// See: [`SubsonicData`](crate::subsonic::models::SubsonicData) 
 /// and [`OpenSubsonicData`](crate::opensubsonic::models::OpenSubsonicData)
-pub trait SubsonicDataTrait<T> {
+pub trait SubsonicDataTrait<TData, TErrorData> {
     fn status(&self) -> &str;
     fn version(&self) -> &str;
-    fn additional(&self) -> &T;
-    fn into_additional(self) -> T;
+    fn additional(&self) -> Result<&TData, &TErrorData>;
+    fn into_additional(self) -> Result<TData, TErrorData>;
 }
 
 /// Trait to be implemented by structs containing Subsonic Authentication data to then be wrapped by
@@ -76,3 +77,5 @@ pub trait SubsonicAuthenticationTrait {
     fn legacy_password(username: &str, password: &str) -> Self;
     fn hashed_password(username: &str, password: &str) -> Self;
 }
+
+pub trait ErrorDataTrait {}

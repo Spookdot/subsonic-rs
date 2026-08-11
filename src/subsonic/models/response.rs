@@ -1,5 +1,6 @@
 use crate::traits::{SubsonicResponseTrait, SubsonicDataTrait};
 use serde::{Serialize, Deserialize, de::{self, Visitor}};
+use super::ErrorData;
 
 /// Subsonic representation of a full 
 /// [`subsonic-response`](https://opensubsonic.netlify.app/docs/responses/subsonic-response/) 
@@ -47,12 +48,12 @@ use serde::{Serialize, Deserialize, de::{self, Visitor}};
 ///     subsonic_response: SubsonicData::<License> {
 ///         status: "ok".into(),
 ///         version: "1.16.1".into(),
-///         additional: License {
+///         additional: Ok(License {
 ///             valid: true,
 ///             email: "demo@demo.org".into(),
 ///             license_expires: "2017-04-11T10:42:50.842Z".into(),
 ///             trial_expires: "2017-04-11T10:42:50.842Z".into()
-///         }
+///         })
 ///     }
 /// }
 /// # ;
@@ -66,7 +67,7 @@ pub struct SubsonicResponse<T>
 }
 
 #[allow(refining_impl_trait)]
-impl<T> SubsonicResponseTrait<T> for SubsonicResponse<T> {
+impl<T> SubsonicResponseTrait<T, ErrorData> for SubsonicResponse<T> {
     fn subsonic_response(&self) -> &SubsonicData<T> {
         &self.subsonic_response
     }
@@ -115,12 +116,53 @@ impl<T> SubsonicResponseTrait<T> for SubsonicResponse<T> {
 /// SubsonicData::<License> {
 ///     status: "ok".into(),
 ///     version: "1.16.1".into(),
-///     additional: License {
+///     additional: Ok(License {
 ///         valid: true,
 ///         email: "demo@demo.org".into(),
 ///         license_expires: "2017-04-11T10:42:50.842Z".into(),
 ///         trial_expires: "2017-04-11T10:42:50.842Z".into()
+///     })
+/// }
+/// # ;
+/// # assert_eq!(data, tester);
+/// ```
+/// # Error Example
+/// The following response which contains an error:
+/// ```json
+/// {
+///     "status": "ok",
+///     "version": "1.16.1",
+///     "error": {
+///         "code": 42,
+///         "message": "Authentication mechanism not supported. Use API keys",
 ///     }
+/// }
+/// ```
+/// results in a case of `OpenSubsonicData` with a nested [`ErrorData`](crate::subsonic::models::ErrorData) struct
+/// ```rust
+/// # use subsonic::subsonic::models::SubsonicData;
+/// # use subsonic::subsonic::models::ErrorData;
+/// # use subsonic::models::SubsonicErrorCode;
+/// # use subsonic::models::License;
+/// #
+/// # let data: SubsonicData<License> = serde_json::from_str(r#"
+/// # {
+/// #     "status": "ok",
+/// #     "version": "1.16.1",
+/// #     "error": {
+/// #         "code": 42,
+/// #         "message": "Authentication mechanism not supported. Use API keys"
+/// #     }
+/// # }
+/// # "#).unwrap();
+/// # let tester = 
+/// SubsonicData::<License> {
+///     status: "ok".into(),
+///     version: "1.16.1".into(),
+///     additional: Err(ErrorData {
+///         code: SubsonicErrorCode::AuthMechanismNotSupported,
+///         message: "Authentication mechanism not supported. Use API keys".into(),
+///     })
 /// }
 /// # ;
 /// # assert_eq!(data, tester);
@@ -133,21 +175,37 @@ pub struct SubsonicData<T>
     /// The server supported Subsonic API version.
     pub version: Box<str>,
     /// The nested Data provided in case of a success
-    pub additional: T,
+    pub additional: Result<T, ErrorData>,
 }
 
-impl<T> SubsonicDataTrait<T> for SubsonicData<T> {
+impl<T> SubsonicDataTrait<T, ErrorData> for SubsonicData<T> {
     fn status(&self) -> &str {
         &self.status
     }
     fn version(&self) -> &str {
         &self.version
     }
-    fn additional(&self) -> &T {
-        &self.additional
+    fn additional(&self) -> Result<&T, &ErrorData> {
+        self.additional.as_ref()
     }
-    fn into_additional(self) -> T {
+    fn into_additional(self) -> Result<T, ErrorData> {
         self.additional
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(untagged)]
+enum UntaggedResult<D> {
+    Ok(D),
+    Err(ErrorData),
+}
+
+impl<D> From<UntaggedResult<D>> for Result<D, ErrorData> {
+    fn from(val: UntaggedResult<D>) -> Self {
+        match val {
+            UntaggedResult::Ok(v) => Ok(v),
+            UntaggedResult::Err(v) => Err(v)
+        }
     }
 }
 
@@ -211,7 +269,7 @@ where
             {
                 let mut status = None;
                 let mut version = None;
-                let mut additional = None;
+                let mut additional: Option<UntaggedResult<T>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Status => {
@@ -237,7 +295,7 @@ where
                 let status = status.ok_or_else(|| de::Error::missing_field("status"))?;
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
                 let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
-                Ok(SubsonicData { status, version, additional })
+                Ok(SubsonicData { status, version, additional: additional.into() })
             }
         }
 
