@@ -428,6 +428,20 @@ async fn get_music_folders() {
 
 #[tokio::test]
 async fn create_user() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let create_user_parameters = CreateUserParameters::with_default_roles("test", "test", "test");
+    let create_user_result = subsonic_client.create_user(create_user_parameters).await;
+
+    if let Err(SubsonicError::Failed(error_data)) = create_user_result {
+        assert_eq!(error_data.code, SubsonicErrorCode::NotAuthorized);
+        assert_eq!(error_data.message.as_ref(), "guest4 is not authorized to create new users.");
+    } else {
+        panic!("createUser endpoint for Subsonic should be returning an error, but isn't\n{create_user_result:#?}");
+    }
+
     // For Ampache
     let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
@@ -442,4 +456,7 @@ async fn create_user() {
     } else {
         panic!("createUser endpoint for Ampache should be returning an error, but isn't\n{create_user_result:#?}");
     }
+
+    // Navidrome returns an error in the form of direct test instead of a proper JSON and therefore
+    // doesn't obey the Subsonic or OpenSubsonic API
 }

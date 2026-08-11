@@ -294,7 +294,10 @@ where
                 }
                 let status = status.ok_or_else(|| de::Error::missing_field("status"))?;
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
-                let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
+                // let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
+                let additional = additional
+                    .or_else(|| serde_json::from_str("null").ok())
+                    .ok_or_else(|| de::Error::missing_field("additional"))?;
                 Ok(SubsonicData { status, version, additional: additional.into() })
             }
         }

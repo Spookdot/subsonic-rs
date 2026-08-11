@@ -357,7 +357,9 @@ where
                 let server_version = server_version.ok_or_else(|| de::Error::missing_field("server_version"))?;
                 let type_ = type_.ok_or_else(|| de::Error::missing_field("type_"))?;
                 // let additional = additional.ok_or_else(|| de::Error::missing_field("additional"))?;
-                let additional = additional.unwrap_or_else(|| serde_json::from_str("").unwrap());
+                let additional = additional
+                    .or_else(|| serde_json::from_str("null").ok())
+                    .ok_or_else(|| de::Error::missing_field("additional"))?;
                 Ok(OpenSubsonicData { status, version, open_subsonic, server_version, type_, additional: additional.into() })
             }
         }
