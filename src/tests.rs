@@ -460,3 +460,36 @@ async fn create_user() {
     // Navidrome returns an error in the form of direct test instead of a proper JSON and therefore
     // doesn't obey the Subsonic or OpenSubsonic API
 }
+
+#[tokio::test]
+async fn delete_user() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let delete_user_result = subsonic_client.delete_user("test").await;
+
+    if let Err(SubsonicError::Failed(error_data)) = delete_user_result {
+        assert_eq!(error_data.code, SubsonicErrorCode::NotAuthorized);
+        assert_eq!(error_data.message.as_ref(), "guest4 is not authorized to delete users.");
+    } else {
+        panic!("deleteUser endpoint for Subsonic should be returning an error, but isn't\n{delete_user_result:#?}");
+    }
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let delete_user_result = subsonic_client.delete_user("test").await;
+
+    if let Err(SubsonicError::Failed(error_data)) = delete_user_result {
+        assert_eq!(error_data.code, SubsonicErrorCode::NotAuthorized);
+        assert_eq!(error_data.message.as_ref(), "User is not authorized for the given operation.");
+        assert_eq!(error_data.help_url.as_deref(), Some("https://ampache.org/api/subsonic"));
+    } else {
+        panic!("deleteUser endpoint for Ampache should be returning an error, but isn't\n{delete_user_result:#?}");
+    }
+
+    // Navidrome returns an error in the form of direct test instead of a proper JSON and therefore
+    // doesn't obey the Subsonic or OpenSubsonic API
+}

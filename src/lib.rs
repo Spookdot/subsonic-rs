@@ -247,4 +247,19 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_response)
     }
+    pub async fn delete_user(&self, username: &str) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+        let url =  format!("{}/rest/deleteUser.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("username", username)])
+            .send()
+            .await?;
+
+        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
+        if subsonic_response.subsonic_response().additional().is_err() {
+            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
+        }
+
+        Ok(subsonic_response)
+    }
 }
