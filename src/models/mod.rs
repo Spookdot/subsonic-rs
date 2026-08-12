@@ -4,17 +4,29 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 #[derive(Deserialize_repr, Serialize_repr, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum SubsonicErrorCode {
+    /// A generic error.
     GenericError = 0,
+    /// Required parameter is missing.
     MissingParameter = 10,
+    /// Incompatible Subsonic REST protocol version. Client must upgrade.
     ClientUpgradeRequired = 20,
+    /// Incompatible Subsonic REST protocol version. Server must upgrade.
     ServerUpgradeRequired = 30,
+    /// Wrong username or password.
     WrongLogin = 40,
+    /// Token authentication not supported for LDAP users.
     NoTokenAuthForLdap = 41,
+    /// Provided authentication mechanism not supported.
     AuthMechanismNotSupported = 42,
+    /// Multiple conflicting authentication mechanisms provided.
     MultipleAuthMechanisms = 43,
+    /// Invalid API key.
     InvalidApiKey = 44,
+    /// User is not authorized for the given operation.
     NotAuthorized = 50,
+    /// The trial period for the Subsonic server is over. Please upgrade to Subsonic Premium. Visit subsonic.org for details.
     TrialExpire = 60,
+    /// The requested data was not found.
     RequestDataNotFound = 70,
 }
 
