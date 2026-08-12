@@ -18,6 +18,56 @@ pub enum SubsonicErrorCode {
     RequestDataNotFound = 70,
 }
 
+/// A chatMessage.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::ChatMessage>(r#"
+/// {
+///   "username": "user",
+///   "time": 1678935699000,
+///   "message": "Api Script Testing"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatMessage {
+    /// Username
+    pub username: Box<str>,
+    /// Time in millis since Jan 1 1970
+    pub time: u64,
+    /// The message
+    pub message: Box<str>,
+}
+
+/// Chat messages list.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::ChatMessages>(r#"
+/// {
+///   "chatMessage": [
+///     {
+///       "username": "admin",
+///       "time": 1678935707000,
+///       "message": "Api Script Testing"
+///     },
+///     {
+///       "username": "user",
+///       "time": 1678935699000,
+///       "message": "Api Script Testing"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatMessages {
+    /// List of chatMessage
+    #[serde(default)]
+    pub chat_message: Vec<ChatMessage>
+}
+
 /// Artist details
 /// # Example
 /// ```

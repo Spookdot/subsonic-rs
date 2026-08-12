@@ -493,3 +493,31 @@ async fn delete_user() {
     // Navidrome returns an error in the form of direct test instead of a proper JSON and therefore
     // doesn't obey the Subsonic or OpenSubsonic API
 }
+
+#[tokio::test]
+async fn chat_messages() {
+    let message = "this is cool stuff";
+
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    subsonic_client.add_chat_message(message).await.unwrap();
+    let messages = subsonic_client.get_chat_messages(None).await.unwrap();
+    let filtered_messages: Vec<&ChatMessage> = messages.chat_message.iter().filter(|i| i.message.as_ref() == message).collect();
+    assert!(!filtered_messages.is_empty(), "No messages found matching the preset one\n{:#?}", messages);
+
+    // For Subsonic
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let add_chat_message_result = subsonic_client.add_chat_message(message).await;
+    if let Err(SubsonicError::Failed(e)) = add_chat_message_result {
+        assert_eq!(e.code, SubsonicErrorCode::GenericError);
+    } else {
+        panic!("Ampache should be returning an error object but either sent a working response or errored otherwise\n{:#?}", add_chat_message_result);
+    }
+
+    let messages = subsonic_client.get_chat_messages(None).await.unwrap();
+    assert!(messages.chat_message.is_empty(), "Received Chat Messages even though the server doesn't support them\n{:#?}", messages);
+}

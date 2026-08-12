@@ -262,4 +262,42 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_response)
     }
+    /// Adds a message to the chat log
+    ///
+    /// # Arguments
+    /// * `message` - The chat message.
+    pub async fn add_chat_message(&self, message: &str) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+        let url =  format!("{}/rest/addChatMessage.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("message", message)])
+            .send()
+            .await?;
+
+        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
+        if subsonic_response.subsonic_response().additional().is_err() {
+            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
+        }
+
+        Ok(subsonic_response)
+        
+    }
+    /// Return the current visible (non-expired) chat messages.
+    ///
+    /// # Arguments
+    /// * `since` - Only return messages newer than this time (in millis since Jan 1 1970).
+    pub async fn get_chat_messages(&self, since: Option<i32>) -> Result<ChatMessages, SubsonicError<T::ErrorData>> {
+        let url = format!("{}/rest/getChatMessages.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("since", since)])
+            .send()
+            .await?;
+
+        
+        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
+
+        Ok(subsonic_data.into_additional()?)
+    }
 }
