@@ -507,7 +507,7 @@ async fn chat_messages() {
     let filtered_messages: Vec<&ChatMessage> = messages.chat_message.iter().filter(|i| i.message.as_ref() == message).collect();
     assert!(!filtered_messages.is_empty(), "No messages found matching the preset one\n{:#?}", messages);
 
-    // For Subsonic
+    // For Ampache
     let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
 
@@ -520,4 +520,29 @@ async fn chat_messages() {
 
     let messages = subsonic_client.get_chat_messages(None).await.unwrap();
     assert!(messages.chat_message.is_empty(), "Received Chat Messages even though the server doesn't support them\n{:#?}", messages);
+}
+
+#[tokio::test]
+async fn change_password() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let change_password_result = subsonic_client.change_password(SUBSONIC.username, SUBSONIC.password).await;
+    if let Err(SubsonicError::Failed(e)) = change_password_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", change_password_result);
+    }
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let change_password_result = subsonic_client.change_password(SUBSONIC.username, SUBSONIC.password).await;
+    if let Err(SubsonicError::Failed(e)) = change_password_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", change_password_result);
+    }
 }

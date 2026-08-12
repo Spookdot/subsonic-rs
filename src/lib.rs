@@ -280,7 +280,6 @@ impl<T: SubsonicServerInfo> Client<T> {
         }
 
         Ok(subsonic_response)
-        
     }
     /// Return the current visible (non-expired) chat messages.
     ///
@@ -299,5 +298,20 @@ impl<T: SubsonicServerInfo> Client<T> {
         let subsonic_data = subsonic_response.into_subsonic_data();
 
         Ok(subsonic_data.into_additional()?)
+    }
+    pub async fn change_password(&self, username: &str, password: &str) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+        let url =  format!("{}/rest/changePassword.view", self.url);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(&[("username", username), ("password", password)])
+            .send()
+            .await?;
+
+        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
+        if subsonic_response.subsonic_response().additional().is_err() {
+            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
+        }
+
+        Ok(subsonic_response)
     }
 }
