@@ -26,45 +26,13 @@ impl SubsonicServerInfo for OpenSubsonic {
 impl Client<OpenSubsonic> {
     pub async fn get_lyrics_by_song_id(&self, id: &str) -> Result<LyricsList, SubsonicError<ErrorData>> {
         // TODO account for OpenSubsonic Servers that don't implement the Extension
-        let url = format!("{}/rest/getLyricsBySongId.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("id", id)])
-            .send()
-            .await?;
-
-        
-        let subsonic_response: OpenSubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getLyricsBySongId.view", &[("id", id)]).await
     }
     pub async fn get_lyrics_by_song_id_enhanced(&self, id: &str) -> Result<EnhancedLyricsList, SubsonicError<ErrorData>> {
         // TODO account for OpenSubsonic Servers that don't implement the Extension
-        let url = format!("{}/rest/getLyricsBySongId.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("id", id), ("enhanced", "true")])
-            .send()
-            .await?;
-
-        
-        let subsonic_response: OpenSubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getLyricsBySongId.view", &[("id", id), ("enhanced", "true")]).await
     }
     pub async fn get_open_subsonic_extensions(&self) -> Result<Vec<OpenSubsonicExtension>, SubsonicError<ErrorData>> {
-        let url = format!("{}/rest/getOpenSubsonicExtensions.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: OpenSubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getOpenSubsonicExtensions.view", &()).await
     }
 }

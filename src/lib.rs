@@ -49,6 +49,8 @@ pub mod traits;
 #[cfg(test)]
 mod tests;
 
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use thiserror::Error;
 use crate::models::*;
 use crate::parameters::*;
@@ -62,7 +64,7 @@ pub enum SubsonicError<T: ErrorDataTrait> {
     #[error("Deserialization of a response failed")]
     SerdeError(#[from] serde_json::Error),
     #[error("The server returned a failed response")]
-    Failed(#[from] T), // TODO actually contain any data from the server
+    Failed(#[from] T),
     #[error("Deserialization failed at {url} for {body}")]
     Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
 }
@@ -96,11 +98,18 @@ impl<T: SubsonicServerInfo> Client<T> {
             phantom: std::marker::PhantomData
         }
     }
-    /// Used to test the connectivity with the server.
-    pub async fn ping(&self) -> Result<(), SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/ping.view", self.url);
+    async fn query<TParameter, TResponse>(
+        &self, 
+        path: &str, 
+        parameters: &TParameter
+    ) -> Result<TResponse, SubsonicError<T::ErrorData>> 
+    where
+        TParameter: Serialize, TResponse: DeserializeOwned + Serialize
+    {
+        let url = format!("{}{}", self.url, path);
         let response = self.client.get(url)
             .query(&self.parameters)
+            .query(parameters)
             .send()
             .await?;
 
@@ -109,203 +118,63 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional()?)
     }
+    /// Used to test the connectivity with the server.
+    pub async fn ping(&self) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/ping.view", &()).await
+    }
     pub async fn get_license(&self) -> Result<License, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/getLicense.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getLicense.view", &()).await
     }
     /// DEPRECATED endpoint included for compatibility reasons. 
     /// Please consider using [`Client::search2()`] or [`Client::search3()`] instead
     pub async fn search(&self, parameters: SearchParameters) -> Result<T::SearchResult, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/search.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/search.view", &parameters).await
     }
     pub async fn search2(&self, parameters: Search3Parameters) -> Result<T::SearchResult2, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/search2.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/search2.view", &parameters).await
     }
     pub async fn search3(&self, parameters: Search3Parameters) -> Result<T::SearchResult3, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/search3.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        // TODO fix the type mess
-        let url = response.url().to_owned();
-        let response_text = response.text().await?;
-        let subsonic_response: T::SubsonicResponse<_> = match serde_json::from_str(&response_text) {
-            Ok(success) => success,
-            Err(error) => {
-                return Err(SubsonicError::Deserialization { url: url.as_str().into(), body: response_text.into(), serde_error: error });
-            }
-        };
-
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/search3.view", &parameters).await
     }
-    pub async fn star(&self, parameters: StarParameters) -> Result<T::BasicResponse, SubsonicError<T::ErrorData>> {
-        let url =  format!("{}/rest/star.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        Ok(response.json().await?)
+    pub async fn star(&self, parameters: StarParameters) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/star.view", &parameters).await
     }
-    pub async fn unstar(&self, parameters: StarParameters) -> Result<T::BasicResponse, SubsonicError<T::ErrorData>> {
-        let url =  format!("{}/rest/unstar.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        Ok(response.json().await?)
+    pub async fn unstar(&self, parameters: StarParameters) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/unstar.view", &parameters).await
     }
     pub async fn get_song(&self, id: &str) -> Result<T::Child, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/getSong.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("id", id)])
-            .send()
-            .await?;
-
-        // TODO fix the type mess
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getSong.view", &[("id", id)]).await
     }
     pub async fn get_lyrics(&self, parameters: GetLyricsParameters) -> Result<Lyrics, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/getLyrics.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getLyrics.view", &parameters).await
     }
     pub async fn get_music_folders(&self) -> Result<MusicFolders, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/getMusicFolders.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .send()
-            .await?;
-
-        
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getMusicFolders.view", &()).await
     }
     pub async fn create_user(&self, parameters: CreateUserParameters) -> Result<(), SubsonicError<T::ErrorData>> {
-        let url =  format!("{}/rest/createUser.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&parameters)
-            .send()
-            .await?;
-
-        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/createUser.view", &parameters).await
     }
     pub async fn delete_user(&self, username: &str) -> Result<(), SubsonicError<T::ErrorData>> {
-        let url =  format!("{}/rest/deleteUser.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("username", username)])
-            .send()
-            .await?;
-
-        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/deleteUser.view", &[("username", username)]).await
     }
     /// Adds a message to the chat log
     ///
     /// # Arguments
     /// * `message` - The chat message.
     pub async fn add_chat_message(&self, message: &str) -> Result<(), SubsonicError<T::ErrorData>> {
-        let url =  format!("{}/rest/addChatMessage.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("message", message)])
-            .send()
-            .await?;
-
-        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/addChatMessage.view", &[("message", message)]).await
     }
     /// Return the current visible (non-expired) chat messages.
     ///
     /// # Arguments
     /// * `since` - Only return messages newer than this time (in millis since Jan 1 1970).
     pub async fn get_chat_messages(&self, since: Option<i32>) -> Result<ChatMessages, SubsonicError<T::ErrorData>> {
-        let url = format!("{}/rest/getChatMessages.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("since", since)])
-            .send()
-            .await?;
-
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query("/rest/getChatMessages.view", &[("since", since)]).await
     }
     pub async fn change_password(&self, username: &str, password: &str) -> Result<(), SubsonicError<T::ErrorData>> {
-        let url =  format!("{}/rest/changePassword.view", self.url);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(&[("username", username), ("password", password)])
-            .send()
-            .await?;
-
-        let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        let subsonic_data = subsonic_response.into_subsonic_data();
-
-        Ok(subsonic_data.into_additional()?)
+        self.query(
+            "/rest/changePassword.view", 
+            &[("username", username), ("password", password)]
+        ).await
     }
 }
