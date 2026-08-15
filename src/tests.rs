@@ -39,21 +39,18 @@ async fn ping() {
 
     let ping_response_result = subsonic_client.ping().await;
     ping_response_result.unwrap();
-    // assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
 
     // For Navidrome
     let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
     subsonic_client.ping().await.unwrap();
-    // assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
 
     // For Ampache
     let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
 
     subsonic_client.ping().await.unwrap();
-    // assert_eq!(ping_response.subsonic_response.status.as_ref(), "ok", "{:#?}", ping_response);
 }
 
 #[tokio::test]
@@ -90,6 +87,7 @@ async fn search() {
 
     assert!(!search_response.match_.is_empty(), "{:#?}", search_response);
     assert_eq!(search_response.match_[0].artist.as_deref(), Some("PeerGynt Lobogris"), "{:#?}", search_response);
+
     // Navidrome doesn't support because deprecated
 
     // For Ampache
@@ -338,8 +336,8 @@ async fn get_lyrics_by_song_id() {
     let get_lyrics_response = subsonic_client.get_lyrics_by_song_id("eMCrMHEMJG7IMu3soo0wsg").await.unwrap();
     let lyrics = get_lyrics_response.structured_lyrics[0].to_owned();
 
-    assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", &lyrics.display_title);
-    assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", &lyrics.display_artist);
+    assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", lyrics.display_title);
+    assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", lyrics.display_artist);
     assert_eq!(lyrics.line[0].value.as_ref(), "Letting You", "Got {:?} instead of the lyric \"Letting You\"", lyrics.line[0].value);
 
     // TODO add case for Ampache
@@ -355,8 +353,8 @@ async fn get_lyrics_by_song_id_enhanced() {
     let get_lyrics_response = subsonic_client.get_lyrics_by_song_id_enhanced("eMCrMHEMJG7IMu3soo0wsg").await.unwrap();
     let lyrics = get_lyrics_response.structured_lyrics[0].to_owned();
 
-    assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", &lyrics.display_title);
-    assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", &lyrics.display_artist);
+    assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", lyrics.display_title);
+    assert_eq!(lyrics.display_artist.as_deref(), Some("Nine Inch Nails"), "Got {:?} instead of Nine Inch Nails", lyrics.display_artist);
     assert_eq!(lyrics.kind, Some(StructuredLyricsKind::Main));
     assert_eq!(lyrics.line[0].value.as_ref(), "Letting You", "Got {:?} instead of the lyric \"Letting You\"", lyrics.line[0].value);
 
