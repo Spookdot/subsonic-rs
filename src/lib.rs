@@ -97,14 +97,17 @@ impl<T: SubsonicServerInfo> Client<T> {
         }
     }
     /// Used to test the connectivity with the server.
-    pub async fn ping(&self) -> Result<T::BasicResponse, SubsonicError<T::ErrorData>> {
+    pub async fn ping(&self) -> Result<(), SubsonicError<T::ErrorData>> {
         let url = format!("{}/rest/ping.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
             .send()
             .await?;
 
-        Ok(response.json().await?)
+        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
+        let subsonic_data = subsonic_response.into_subsonic_data();
+
+        Ok(subsonic_data.into_additional()?)
     }
     pub async fn get_license(&self) -> Result<License, SubsonicError<T::ErrorData>> {
         let url = format!("{}/rest/getLicense.view", self.url);
@@ -232,7 +235,7 @@ impl<T: SubsonicServerInfo> Client<T> {
 
         Ok(subsonic_data.into_additional()?)
     }
-    pub async fn create_user(&self, parameters: CreateUserParameters) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+    pub async fn create_user(&self, parameters: CreateUserParameters) -> Result<(), SubsonicError<T::ErrorData>> {
         let url =  format!("{}/rest/createUser.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -241,13 +244,11 @@ impl<T: SubsonicServerInfo> Client<T> {
             .await?;
 
         let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        if subsonic_response.subsonic_response().additional().is_err() {
-            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
-        }
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        Ok(subsonic_response)
+        Ok(subsonic_data.into_additional()?)
     }
-    pub async fn delete_user(&self, username: &str) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+    pub async fn delete_user(&self, username: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         let url =  format!("{}/rest/deleteUser.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -256,17 +257,15 @@ impl<T: SubsonicServerInfo> Client<T> {
             .await?;
 
         let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        if subsonic_response.subsonic_response().additional().is_err() {
-            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
-        }
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        Ok(subsonic_response)
+        Ok(subsonic_data.into_additional()?)
     }
     /// Adds a message to the chat log
     ///
     /// # Arguments
     /// * `message` - The chat message.
-    pub async fn add_chat_message(&self, message: &str) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+    pub async fn add_chat_message(&self, message: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         let url =  format!("{}/rest/addChatMessage.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -275,11 +274,9 @@ impl<T: SubsonicServerInfo> Client<T> {
             .await?;
 
         let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        if subsonic_response.subsonic_response().additional().is_err() {
-            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
-        }
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        Ok(subsonic_response)
+        Ok(subsonic_data.into_additional()?)
     }
     /// Return the current visible (non-expired) chat messages.
     ///
@@ -293,13 +290,12 @@ impl<T: SubsonicServerInfo> Client<T> {
             .send()
             .await?;
 
-        
         let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
         Ok(subsonic_data.into_additional()?)
     }
-    pub async fn change_password(&self, username: &str, password: &str) -> Result<T::SubsonicResponse<()>, SubsonicError<T::ErrorData>> {
+    pub async fn change_password(&self, username: &str, password: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         let url =  format!("{}/rest/changePassword.view", self.url);
         let response = self.client.get(url)
             .query(&self.parameters)
@@ -308,10 +304,8 @@ impl<T: SubsonicServerInfo> Client<T> {
             .await?;
 
         let subsonic_response: T::SubsonicResponse<()> = response.json().await?;
-        if subsonic_response.subsonic_response().additional().is_err() {
-            return Err(subsonic_response.into_subsonic_data().into_additional().err().unwrap().into());
-        }
+        let subsonic_data = subsonic_response.into_subsonic_data();
 
-        Ok(subsonic_response)
+        Ok(subsonic_data.into_additional()?)
     }
 }
