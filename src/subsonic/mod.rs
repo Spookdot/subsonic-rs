@@ -20,5 +20,6 @@ impl SubsonicServerInfo for Subsonic {
     type SearchResult2 = SearchResult2;
     type SearchResult = SearchResult;
     type Child = Child;
+    type Bookmarks = Bookmarks;
 }
 

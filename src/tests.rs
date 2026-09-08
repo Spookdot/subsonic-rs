@@ -532,3 +532,85 @@ async fn change_password() {
         panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", change_password_result);
     }
 }
+
+#[tokio::test]
+async fn bookmarks() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    
+    // Fetch a song to verify the bookmarks with
+    let search3_response = subsonic_client.search3(Search3Parameters::query("e")).await.unwrap();
+    let song = search3_response.song[0].to_owned();
+    let song_id = song.id;
+
+    // Check current bookmark status
+    let bookmarks = subsonic_client.get_bookmarks().await.unwrap();
+    let is_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id == song_id).is_some();
+    // Toggle bookmark
+    if is_bookmarked {
+        subsonic_client.delete_bookmark(&song_id).await.unwrap();
+    } else {
+        subsonic_client.create_bookmark(CreateBookmarkParameters::id(song_id.as_ref())).await.unwrap();
+    }
+    
+    // Fetch changed bookmark status
+    let bookmarks = subsonic_client.get_bookmarks().await.unwrap();
+    let now_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id == song_id).is_some();
+    assert_ne!(is_bookmarked, now_bookmarked);
+
+    // TODO can't parse Navidrome response for some reason
+    // For Navidrome
+    /*
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    
+    // Fetch a song to verify the bookmarks with
+    let search3_response = subsonic_client.search3(Search3Parameters::query("")).await.unwrap();
+    let song = search3_response.song[0].to_owned();
+    let song_id = song.id;
+
+    // Check current bookmark status
+    let bookmarks = subsonic_client.get_bookmarks().await.unwrap();
+    let is_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id == song_id).is_some();
+    // Toggle bookmark
+    if is_bookmarked {
+        subsonic_client.delete_bookmark(&song_id).await.unwrap();
+    } else {
+        subsonic_client.create_bookmark(CreateBookmarkParameters::id(song_id.as_ref())).await.unwrap();
+    }
+    
+    // Fetch changed bookmark status
+    let bookmarks = subsonic_client.get_bookmarks().await.unwrap();
+    let now_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id == song_id).is_some();
+    assert_ne!(is_bookmarked, now_bookmarked);
+    */
+
+    // TODO open issue, asks for required parameter despite giving all of them 
+    // https://demo.ampache.dev/rest/createBookmark?id=so-5&position=0&apiKey=demodemo&v=1.16.0&f=json&c=rust-subsonic-library
+    /*
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    
+    // Fetch a song to verify the bookmarks with
+    let search3_response = subsonic_client.search3(Search3Parameters::query("")).await.unwrap();
+    let song = search3_response.song[0].to_owned();
+    let song_id = song.id;
+
+    // Check current bookmark status
+    let bookmarks = subsonic_client.get_bookmarks().await.unwrap();
+    let is_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id == song_id).is_some();
+    // Toggle bookmark
+    if is_bookmarked {
+        subsonic_client.delete_bookmark(&song_id).await.unwrap();
+    } else {
+        subsonic_client.create_bookmark(CreateBookmarkParameters::id(song_id.as_ref())).await.unwrap();
+    }
+    
+    // Fetch changed bookmark status
+    let bookmarks = subsonic_client.get_bookmarks().await.unwrap();
+    let now_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id == song_id).is_some();
+    assert_ne!(is_bookmarked, now_bookmarked);
+    */
+}

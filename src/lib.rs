@@ -113,7 +113,13 @@ impl<T: SubsonicServerInfo> Client<T> {
             .send()
             .await?;
 
-        let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
+        // let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
+        let text = response.text().await?;
+        let subsonic_result = serde_json::from_str(text.as_str());
+        if let Err(e) = subsonic_result {
+            panic!("{:?}\n{:#?}", e, text);
+        }
+        let subsonic_response: T::SubsonicResponse<_> = subsonic_result?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
         Ok(subsonic_data.into_additional()?)
@@ -176,5 +182,20 @@ impl<T: SubsonicServerInfo> Client<T> {
             "/rest/changePassword.view", 
             &[("username", username), ("password", password)]
         ).await
+    }
+    /// Creates or updates a bookmark (a position within a media file). Bookmarks are personal and not visible to other users.
+    pub async fn create_bookmark(&self, parameters: CreateBookmarkParameters) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/createBookmark.view", &parameters).await
+    }
+    /// Returns all bookmarks for this user. A bookmark is a position within a certain media file.
+    pub async fn get_bookmarks(&self) -> Result<T::Bookmarks, SubsonicError<T::ErrorData>> {
+        self.query("/rest/getBookmarks.view", &()).await
+    }
+    /// Creates or updates a bookmark (a position within a media file). Bookmarks are personal and not visible to other users.
+    ///
+    /// # Arguments
+    /// * `id` - ID of the media file for which to delete the bookmark. Other users’ bookmarks are not affected.
+    pub async fn delete_bookmark(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/deleteBookmark.view", &[("id", id)]).await
     }
 }

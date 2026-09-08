@@ -397,3 +397,30 @@ impl Default for CreateUserParameters {
         }
     }
 }
+
+/// Parameters for the [`crate::Client<T>::create_bookmark()`] method
+#[derive(Serialize, Default, PartialEq, Eq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateBookmarkParameters {
+    /// ID of the media file to bookmark. If a bookmark already exists for this file it will be overwritten.
+    id: Box<str>,
+    /// The position (in milliseconds) within the media file.
+    position: u64,
+    /// A user-defined comment.
+    comment: Option<Box<str>>,
+}
+
+impl CreateBookmarkParameters {
+    pub fn id(id: impl Into<Box<str>>) -> Self {
+        Self { id: id.into(), ..Default::default() }
+    }
+    pub fn with_position(id: impl Into<Box<str>>, position: u64) -> Self {
+        Self { id: id.into(), position, ..Default::default() }
+    }
+    pub fn with_comment(id: impl Into<Box<str>>, comment: impl Into<Box<str>>) -> Self {
+        Self { id: id.into(), comment: Some(comment.into()), ..Default::default() }
+    }
+    pub fn all(id: impl Into<Box<str>>, position: u64, comment: impl Into<Box<str>>) -> Self {
+        Self { id: id.into(), position, comment: Some(comment.into()) }
+    }
+}

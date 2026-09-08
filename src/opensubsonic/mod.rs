@@ -21,6 +21,7 @@ impl SubsonicServerInfo for OpenSubsonic {
     type SearchResult2 = SearchResult2;
     type SearchResult = SearchResult;
     type Child = Child;
+    type Bookmarks = Bookmarks;
 }
 
 impl Client<OpenSubsonic> {

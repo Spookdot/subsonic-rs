@@ -44,6 +44,12 @@ pub trait SubsonicServerInfo {
     /// See: [`subsonic::models::Child`](crate::subsonic::models::Child)
     /// and [`opensubsonic::models::Child`](crate::opensubsonic::models::Child)
     type Child: Serialize + DeserializeOwned;
+    /// Type used to represent a Bookmark
+    /// For example method [`Client::get_bookmarks()`](crate::Client::get_bookmarks())
+    ///
+    /// See: [`subsonic::models::Bookmark`](crate::subsonic::models::Bookmark)
+    /// and [`opensubsonic::models::Bookmark`](crate::opensubsonic::models::Bookmark)
+    type Bookmarks: Serialize + DeserializeOwned;
 }
 
 // TODO rename Trait
