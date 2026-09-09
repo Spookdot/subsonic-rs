@@ -93,6 +93,73 @@ pub struct OpenSubsonicExtension {
     pub versions: Vec<u32>,
 }
 
+/// An internetRadioStation.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::InternetRadioStation>(r#"
+/// {
+///   "id": "2",
+///   "name": "HBR1.com - I.D.M. Tranceponder",
+///   "streamUrl": "http://ubuntu.hbr1.com:19800/trance.ogg",
+///   "homePageUrl": "http://www.hbr1.com/",
+///   "coverArt": "ir-2"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct InternetRadioStation {
+    /// The Id
+    pub id: Box<str>,
+    /// The name
+    pub name: Box<str>,
+    /// The radio url
+    pub stream_url: Box<str>,
+    /// The home page URL for the station.
+    pub home_page_url: Option<Box<str>>,
+    /// The cover art id.
+    pub cover_art: Option<Box<str>>,
+}
+
+/// internetRadioStations.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::InternetRadioStations>(r#"
+/// {
+///   "internetRadioStation": [
+///     {
+///       "id": "1",
+///       "name": "HBR1.com - Dream Factory",
+///       "streamUrl": "http://ubuntu.hbr1.com:19800/ambient.aac",
+///       "homePageUrl": "http://www.hbr1.com/",
+///       "coverArt": "ir-1"
+///     },
+///     {
+///       "id": "2",
+///       "name": "HBR1.com - I.D.M. Tranceponder",
+///       "streamUrl": "http://ubuntu.hbr1.com:19800/trance.ogg",
+///       "homePageUrl": "http://www.hbr1.com/",
+///       "coverArt": "ir-2"
+///     },
+///     {
+///       "id": "3",
+///       "name": "4ZZZ Community Radio",
+///       "streamUrl": "https://stream.4zzz.org.au:9200/4zzz",
+///       "homePageUrl": "https://4zzzfm.org.au",
+///       "coverArt": "ir-3"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct InternetRadioStations {
+    /// A list of internetRadioStation
+    #[serde(default)]
+    pub internet_radio_station: Vec<InternetRadioStation>,
+}
+
 /// A bookmark.
 /// # Example
 /// ```

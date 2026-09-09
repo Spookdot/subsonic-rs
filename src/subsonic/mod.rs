@@ -21,5 +21,6 @@ impl SubsonicServerInfo for Subsonic {
     type SearchResult = SearchResult;
     type Child = Child;
     type Bookmarks = Bookmarks;
+    type InternetRadioStations = InternetRadioStations;
 }
 

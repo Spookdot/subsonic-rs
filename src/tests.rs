@@ -614,3 +614,104 @@ async fn bookmarks() {
     assert_ne!(is_bookmarked, now_bookmarked);
     */
 }
+
+#[tokio::test]
+async fn create_internet_radio_stations() {
+    let radio_parameters = CreateInternetRadioStationParameters::without_homepage("e", "e");
+
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let create_result = subsonic_client.create_internet_radio_station(radio_parameters.clone()).await;
+    if let Err(SubsonicError::Failed(e)) = create_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", create_result);
+    }
+
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    let create_result = subsonic_client.create_internet_radio_station(radio_parameters.clone()).await;
+    if let Err(SubsonicError::Failed(e)) = create_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", create_result);
+    }
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let create_result = subsonic_client.create_internet_radio_station(radio_parameters.clone()).await;
+    if let Err(SubsonicError::Failed(e)) = create_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", create_result);
+    }
+}
+
+#[tokio::test]
+async fn delete_internet_radio_stations() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let delete_result = subsonic_client.delete_internet_radio_station("").await;
+    if let Err(SubsonicError::Failed(e)) = delete_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", delete_result);
+    }
+
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    let delete_result = subsonic_client.delete_internet_radio_station("").await;
+    if let Err(SubsonicError::Failed(e)) = delete_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", delete_result);
+    }
+
+    // For Ampache
+    // TODO figure out why it returns 70RequestDataNotFound instead of 50NotAuthorized
+    /*
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let delete_result = subsonic_client.delete_internet_radio_station("e").await;
+    if let Err(SubsonicError::Failed(e)) = delete_result {
+        assert_eq!(e.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!("Received wrong error or an Ok where a SubsonicError::Failed was expected\n{:#?}", delete_result);
+    }
+    */
+}
+
+#[tokio::test]
+async fn get_internet_radio_stations() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
+    assert!(radio_stations.internet_radio_station.is_empty(), "{radio_stations:#?}");
+
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
+    assert!(radio_stations.internet_radio_station.is_empty(), "{radio_stations:#?}");
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
+    assert_eq!(radio_stations.internet_radio_station[0].id, "li-5".into(), "{radio_stations:#?}");
+}

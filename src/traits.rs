@@ -50,6 +50,13 @@ pub trait SubsonicServerInfo {
     /// See: [`subsonic::models::Bookmark`](crate::subsonic::models::Bookmark)
     /// and [`opensubsonic::models::Bookmark`](crate::opensubsonic::models::Bookmark)
     type Bookmarks: Serialize + DeserializeOwned;
+    /// Type used to represent InternetRadioStations
+    /// For example method [`Client::get_internet_radio_stations()`](crate::Client::get_internet_radio_stations())
+    ///
+    /// See: 
+    /// See: [`subsonic::models::InternetRadioStations`](crate::subsonic::models::InternetRadioStations)
+    /// and [`opensubsonic::models::InternetRadioStations`](crate::opensubsonic::models::InternetRadioStations)
+    type InternetRadioStations: Serialize + DeserializeOwned;
 }
 
 // TODO rename Trait

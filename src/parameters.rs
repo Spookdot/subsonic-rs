@@ -424,3 +424,24 @@ impl CreateBookmarkParameters {
         Self { id: id.into(), position, comment: Some(comment.into()) }
     }
 }
+
+/// Parameters for the [`crate::Client<T>::create_internet_radio_station()`] method
+#[derive(Serialize, Default, PartialEq, Eq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateInternetRadioStationParameters {
+    /// The stream URL for the station.
+    stream_url: Box<str>,
+    /// The user-defined name for the station.
+    name: Box<str>,
+    /// The home page URL for the station
+    homepage_url: Option<Box<str>>,
+}
+
+impl CreateInternetRadioStationParameters {
+    pub fn without_homepage(stream_url: impl Into<Box<str>>, name: impl Into<Box<str>>) -> Self {
+        Self { stream_url: stream_url.into(), name: name.into(), ..Default::default() }
+    }
+    pub fn with_homepage(stream_url: impl Into<Box<str>>, name: impl Into<Box<str>>, homepage_url: impl Into<Box<str>>) -> Self {
+        Self { stream_url: stream_url.into(), name: name.into(), homepage_url: Some(homepage_url.into()) }
+    }
+}

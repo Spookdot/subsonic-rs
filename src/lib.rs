@@ -198,4 +198,19 @@ impl<T: SubsonicServerInfo> Client<T> {
     pub async fn delete_bookmark(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         self.query("/rest/deleteBookmark.view", &[("id", id)]).await
     }
+    /// Adds a new internet radio station. Only users with admin privileges are allowed to call this method.
+    pub async fn create_internet_radio_station(&self, parameters: CreateInternetRadioStationParameters) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/createInternetRadioStation.view", &parameters).await
+    }
+    /// Returns all internet radio stations. Takes no extra parameters.
+    pub async fn get_internet_radio_stations(&self) -> Result<T::InternetRadioStations, SubsonicError<T::ErrorData>> {
+        self.query("/rest/getInternetRadioStations.view", &()).await
+    }
+    /// Deletes an existing internet radio station. Only users with admin privileges are allowed to call this method.
+    ///
+    /// # Arguments
+    /// * `id` - The ID for the station.
+    pub async fn delete_internet_radio_station(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/deleteInternetRadioStation.view", &[("id", id)]).await
+    }
 }
