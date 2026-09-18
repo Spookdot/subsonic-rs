@@ -456,20 +456,20 @@ pub struct CreatePlaylistParameters {
     name: Option<Box<str>>,
     /// ID of a song in the playlist. Use one `songId` parameter for each song in the playlist.
     /// Use a Vector for our implementation
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    song_id: Vec<Box<str>>
+    #[serde(default, skip_serializing_if = "<[Box::<str>]>::is_empty")]
+    song_id: Box<[Box<str>]>
 }
 
 impl CreatePlaylistParameters {
     pub fn new(
         playlist_id: Option<impl Into<Box<str>>>, 
         name: Option<impl Into<Box<str>>>, 
-        song_id: Option<Vec<impl Into<Box<str>>>>
+        song_id: Option<impl Into<Box<[Box<str>]>>>
     ) -> Self {
         Self {
             playlist_id: playlist_id.map(Into::into),
             name: name.map(Into::into),
-            song_id: song_id.unwrap_or_default().into_iter().map(Into::into).collect(),
+            song_id: song_id.map(Into::into).unwrap_or_default(),
         }
     }
     pub fn playlist_id(playlist_id: impl Into<Box<str>>) -> Self {
@@ -478,10 +478,10 @@ impl CreatePlaylistParameters {
             ..Default::default()
         }
     }
-    pub fn playlist_id_with_songs(playlist_id: impl Into<Box<str>>, song_id: Vec<impl Into<Box<str>>>) -> Self {
+    pub fn playlist_id_with_songs(playlist_id: impl Into<Box<str>>, song_id: impl Into<Box<[Box<str>]>>) -> Self {
         Self {
             playlist_id: Some(playlist_id.into()),
-            song_id: song_id.into_iter().map(Into::into).collect(),
+            song_id: song_id.into(),
             ..Default::default()
         }
     }
@@ -491,10 +491,10 @@ impl CreatePlaylistParameters {
             ..Default::default()
         }
     }
-    pub fn name_with_songs(name: impl Into<Box<str>>, song_id: Vec<impl Into<Box<str>>>) -> Self {
+    pub fn name_with_songs(name: impl Into<Box<str>>, song_id: impl Into<Box<[Box<str>]>>) -> Self {
         Self {
             name: Some(name.into()),
-            song_id: song_id.into_iter().map(Into::into).collect(),
+            song_id: song_id.into(),
             ..Default::default()
         }
     }
