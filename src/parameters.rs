@@ -445,3 +445,70 @@ impl CreateInternetRadioStationParameters {
         Self { stream_url: stream_url.into(), name: name.into(), homepage_url: Some(homepage_url.into()) }
     }
 }
+
+/// Parameters for the [`crate::Client<T>::create_playlist()`] method
+#[derive(Serialize, Default, PartialEq, Eq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatePlaylistParameters {
+    /// The playlist ID. Required when updating an existing playlist
+    playlist_id: Option<Box<str>>,
+    /// The human-readable name of the playlist. Required when creating a new playlist
+    name: Option<Box<str>>,
+    /// ID of a song in the playlist. Use one `songId` parameter for each song in the playlist.
+    /// Use a Vector for our implementation
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    song_id: Vec<Box<str>>
+}
+
+impl CreatePlaylistParameters {
+    pub fn new(
+        playlist_id: Option<impl Into<Box<str>>>, 
+        name: Option<impl Into<Box<str>>>, 
+        song_id: Option<Vec<impl Into<Box<str>>>>
+    ) -> Self {
+        Self {
+            playlist_id: playlist_id.map(Into::into),
+            name: name.map(Into::into),
+            song_id: song_id.unwrap_or_default().into_iter().map(Into::into).collect(),
+        }
+    }
+    pub fn playlist_id(playlist_id: impl Into<Box<str>>) -> Self {
+        Self {
+            playlist_id: Some(playlist_id.into()),
+            ..Default::default()
+        }
+    }
+    pub fn playlist_id_with_songs(playlist_id: impl Into<Box<str>>, song_id: Vec<impl Into<Box<str>>>) -> Self {
+        Self {
+            playlist_id: Some(playlist_id.into()),
+            song_id: song_id.into_iter().map(Into::into).collect(),
+            ..Default::default()
+        }
+    }
+    pub fn name(name: impl Into<Box<str>>) -> Self {
+        Self {
+            name: Some(name.into()),
+            ..Default::default()
+        }
+    }
+    pub fn name_with_songs(name: impl Into<Box<str>>, song_id: Vec<impl Into<Box<str>>>) -> Self {
+        Self {
+            name: Some(name.into()),
+            song_id: song_id.into_iter().map(Into::into).collect(),
+            ..Default::default()
+        }
+    }
+    pub fn into_serializable(self) -> Vec<(&'static str, Box<str>)> {
+        let mut slice: Vec<(&'static str, Box<str>)> = Vec::new();
+        if let Some(playlist_id) = self.playlist_id {
+            slice.push(("playlistId", playlist_id));
+        }
+        if let Some(name) = self.name {
+            slice.push(("name", name));
+        }
+        for i in self.song_id {
+            slice.push(("song_id", i));
+        }
+        slice
+    }
+}

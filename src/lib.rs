@@ -213,4 +213,31 @@ impl<T: SubsonicServerInfo> Client<T> {
     pub async fn delete_internet_radio_station(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         self.query("/rest/deleteInternetRadioStation.view", &[("id", id)]).await
     }
+    /// Creates (or updates) a playlist.
+    pub async fn create_playlist(&self, parameters: CreatePlaylistParameters) -> Result<T::PlaylistWithSongs, SubsonicError<T::ErrorData>> {
+        self.query("/rest/createPlaylist.view", &parameters.into_serializable()).await
+    }
+    /// Returns a listing of files in a saved playlist.
+    ///
+    /// # Arguments
+    /// * `id` - ID of the playlist to return, as obtained by [`getPlaylists`](Client<T>::get_playlists()).
+    pub async fn get_playlist(&self, id: &str) -> Result<T::PlaylistWithSongs, SubsonicError<T::ErrorData>> {
+        self.query("/rest/getPlaylist.view", &[("id", id)]).await
+    }
+    /// Returns all playlists a user is allowed to play.
+    ///
+    /// # Arguments
+    /// * `username` - (Since 1.8.0) If specified, return playlists for this user rather than for the authenticated user. 
+    ///   The authenticated user must have admin role if this parameter is used.
+    pub async fn get_playlists(&self, username: Option<&str>) -> Result<T::Playlists, SubsonicError<T::ErrorData>> {
+        self.query("/rest/getPlaylists.view", &[("username", username)]).await
+    }
+    /// Deletes a saved playlist.
+    ///
+    /// # Arguments
+    /// * `id` - ID of the playlist to delete, as obtained by
+    ///   [`getPlaylists`](Client<T>::get_playlists()).
+    pub async fn delete_playlist(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/deletePlaylist.view", &[("id", id)]).await
+    }
 }

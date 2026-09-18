@@ -93,6 +93,180 @@ pub struct OpenSubsonicExtension {
     pub versions: Vec<u32>,
 }
 
+/// Playlist.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::Playlists>(r#"
+/// {
+///   "playlist": [
+///     {
+///       "id": "800000003",
+///       "name": "random - admin - private (admin)",
+///       "owner": "admin",
+///       "public": false,
+///       "created": "2021-02-23T04:35:38+00:00",
+///       "changed": "2021-02-23T04:35:38+00:00",
+///       "songCount": 43,
+///       "duration": 17875,
+///       "readonly": true,
+///       "validUntil": "2023-03-23T03:18:41+00:00"
+///     },
+///     {
+///       "id": "800000002",
+///       "name": "random - admin - public (admin)",
+///       "owner": "admin",
+///       "public": true,
+///       "created": "2021-02-23T04:34:56+00:00",
+///       "changed": "2021-02-23T04:34:56+00:00",
+///       "songCount": 43,
+///       "duration": 17786,
+///       "readonly": true,
+///       "validUntil": "2023-03-23T03:18:41+00:00"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Playlists {
+    #[serde(default)]
+    pub playlist: Vec<Playlist>
+}
+
+/// Playlist.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::Playlist>(r#"
+/// {
+///   "id": "800000075",
+///   "name": "testcreate",
+///   "owner": "user",
+///   "public": true,
+///   "created": "2023-03-16T03:18:41+00:00",
+///   "changed": "2023-03-16T03:18:41+00:00",
+///   "songCount": 1,
+///   "duration": 304,
+///   "readonly": true,
+///   "validUntil": "2023-03-23T03:18:41+00:00"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Playlist {
+    /// Id of the playlist
+    pub id: Box<str>,
+    /// Name of the playlist
+    pub name: Box<str>,
+    /// A comment
+    pub comment: Option<Box<str>>,
+    /// Owner of the playlist
+    pub owner: Option<Box<str>>,
+    /// Is the playlist public
+    pub public: Option<bool>,
+    /// number of songs
+    pub song_count: u32,
+    /// Playlist duration in seconds
+    pub duration: u32,
+    /// Creation date \[ISO 8601\]
+    pub created: Box<str>,
+    /// Last changed date \[ISO 8601\]
+    pub changed: Box<str>,
+    /// A cover Art Id
+    pub cover_art: Option<Box<str>>,
+    /// A list of allowed usernames
+    #[serde(default)]
+    pub allowed_user: Vec<Box<str>>,
+    /// If true the playlist cannot be edited by the current user
+    pub readonly: Option<bool>,
+    /// Date the playlist contents are considered valid until \[ISO 8601\]
+    pub valid_until: Option<Box<str>>,
+}
+
+/// Playlist with songs.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::PlaylistWithSongs>(r#"
+/// {
+///   "id": "800000075",
+///   "name": "testcreate",
+///   "owner": "user",
+///   "public": true,
+///   "created": "2023-03-16T03:18:41+00:00",
+///   "changed": "2023-03-16T03:18:41+00:00",
+///   "songCount": 1,
+///   "duration": 304,
+///   "readonly": true,
+///   "validUntil": "2023-03-23T03:18:41+00:00",
+///   "entry": [
+///     {
+///       "id": "300000060",
+///       "parent": "200000002",
+///       "title": "BrownSmoke",
+///       "isDir": false,
+///       "isVideo": false,
+///       "type": "music",
+///       "albumId": "200000002",
+///       "album": "Colorsmoke EP",
+///       "artistId": "100000002",
+///       "artist": "Synthetic",
+///       "coverArt": "300000060",
+///       "duration": 304,
+///       "bitRate": 20,
+///       "bitDepth": 16,
+///       "samplingRate": 44100,
+///       "channelCount": 2,
+///       "userRating": 5,
+///       "averageRating": 5,
+///       "track": 4,
+///       "year": 2007,
+///       "genre": "Electronic",
+///       "size": 792375,
+///       "discNumber": 1,
+///       "suffix": "wma",
+///       "contentType": "audio/x-ms-wma",
+///       "path": "Synthetic/Synthetic_-_Colorsmoke_EP-20k217-2007/04-Synthetic_-_BrownSmokeYSBM20k22khS.wma"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistWithSongs {
+    /// Id of the playlist
+    pub id: Box<str>,
+    /// Name of the playlist
+    pub name: Box<str>,
+    /// A comment
+    pub comment: Option<Box<str>>,
+    /// Owner of the playlist
+    pub owner: Option<Box<str>>,
+    /// Is the playlist public
+    pub public: Option<bool>,
+    /// number of songs
+    pub song_count: u32,
+    /// Playlist duration in seconds
+    pub duration: u32,
+    /// Creation date \[ISO 8601\]
+    pub created: Box<str>,
+    /// Last changed date \[ISO 8601\]
+    pub changed: Box<str>,
+    /// A cover Art Id
+    pub cover_art: Option<Box<str>>,
+    /// A list of allowed usernames
+    #[serde(default)]
+    pub allowed_user: Vec<Box<str>>,
+    /// If true the playlist cannot be edited by the current user
+    pub readonly: Option<bool>,
+    /// Date the playlist contents are considered valid until \[ISO 8601\]
+    pub valid_until: Option<Box<str>>,
+    /// The list of songs
+    #[serde(default)]
+    pub entry: Vec<Child>,
+}
+
 /// An internetRadioStation.
 /// # Example
 /// ```
@@ -300,6 +474,7 @@ pub struct Bookmark {
 #[serde(rename_all = "camelCase")]
 pub struct Bookmarks {
     /// List of bookmark
+    #[serde(default)]
     pub bookmark: Vec<Bookmark>
 }
 

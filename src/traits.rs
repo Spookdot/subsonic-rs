@@ -57,6 +57,20 @@ pub trait SubsonicServerInfo {
     /// See: [`subsonic::models::InternetRadioStations`](crate::subsonic::models::InternetRadioStations)
     /// and [`opensubsonic::models::InternetRadioStations`](crate::opensubsonic::models::InternetRadioStations)
     type InternetRadioStations: Serialize + DeserializeOwned;
+    /// Type used to represent Playlists
+    /// For example method [`Client::create_playlist()`](crate::Client::create_playlist())
+    ///
+    /// See: 
+    /// See: [`subsonic::models::PlaylistWithSongs`](crate::subsonic::models::PlaylistWithSongs)
+    /// and [`opensubsonic::models::PlaylistWithSongs`](crate::opensubsonic::models::PlaylistWithSongs)
+    type PlaylistWithSongs: Serialize + DeserializeOwned;
+    /// Type used to represent a collection of Playlists
+    /// For example method [`Client::get_playlists()`](crate::Client::get_playlists())
+    ///
+    /// See: 
+    /// See: [`subsonic::models::Playlists`](crate::subsonic::models::Playlists)
+    /// and [`opensubsonic::models::Playlists`](crate::opensubsonic::models::Playlists)
+    type Playlists: Serialize + DeserializeOwned;
 }
 
 // TODO rename Trait

@@ -23,6 +23,8 @@ impl SubsonicServerInfo for OpenSubsonic {
     type Child = Child;
     type Bookmarks = Bookmarks;
     type InternetRadioStations = InternetRadioStations;
+    type PlaylistWithSongs = PlaylistWithSongs;
+    type Playlists = Playlists;
 }
 
 impl Client<OpenSubsonic> {

@@ -31,6 +31,8 @@ const AMPACHE: SubsonicLoginViaToken = SubsonicLoginViaToken {
     token: "demodemo"
 };
 
+const TEST_PLAYLIST_NAME: &str = "spooky-rust-subsonic-test";
+
 #[tokio::test]
 async fn ping() {
     // For Subsonic
@@ -714,4 +716,95 @@ async fn get_internet_radio_stations() {
 
     let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
     assert_eq!(radio_stations.internet_radio_station[0].id, "li-5".into(), "{radio_stations:#?}");
+}
+
+async fn opensubsonic_playlists_utility(client: OpenSubsonicClient) {
+    // Check if the playlist we are creating for testing already exists
+    let existing_playlists = client.get_playlists(None).await.unwrap();
+    let playlist_option = existing_playlists
+        .playlist
+        .into_iter()
+        .find(|item| item.name.as_ref() == TEST_PLAYLIST_NAME);
+    if let Some(playlist) = playlist_option {
+        // Delete the playlist if it already exists
+        client.delete_playlist(&playlist.id).await.unwrap();
+    }
+    
+    // Create our playlist
+    let created_playlist = client
+        .create_playlist(CreatePlaylistParameters::name(TEST_PLAYLIST_NAME))
+        .await
+        .unwrap();
+
+    // Get the id for our created playlist
+    let existing_playlists = client.get_playlists(None).await.unwrap();
+    let playlist = existing_playlists
+        .playlist
+        .into_iter()
+        .find(|item| item.name.as_ref() == TEST_PLAYLIST_NAME)
+        .unwrap();
+
+    assert_eq!(created_playlist.id, playlist.id);
+    
+    // Test if the get_playlist function works
+    client.get_playlist(&playlist.id).await.unwrap();
+
+    // delete the playlist again
+    client.delete_playlist(&playlist.id).await.unwrap();
+}
+
+async fn subsonic_playlists_utility(client: SubsonicClient) {
+    // Check if the playlist we are creating for testing already exists
+    let existing_playlists = client.get_playlists(None).await.unwrap();
+    let playlist_option = existing_playlists
+        .playlist
+        .into_iter()
+        .find(|item| item.name.as_ref() == TEST_PLAYLIST_NAME);
+    if let Some(playlist) = playlist_option {
+        // Delete the playlist if it already exists
+        client.delete_playlist(&playlist.id).await.unwrap();
+    }
+    
+    // Create our playlist
+    let created_playlist = client
+        .create_playlist(CreatePlaylistParameters::name(TEST_PLAYLIST_NAME))
+        .await
+        .unwrap();
+
+    // Get the id for our created playlist
+    let existing_playlists = client.get_playlists(None).await.unwrap();
+    let playlist = existing_playlists
+        .playlist
+        .into_iter()
+        .find(|item| item.name.as_ref() == TEST_PLAYLIST_NAME)
+        .unwrap();
+
+    assert_eq!(created_playlist.id, playlist.id);
+    
+    // Test if the get_playlist function works
+    client.get_playlist(&playlist.id).await.unwrap();
+
+    // delete the playlist again
+    client.delete_playlist(&playlist.id).await.unwrap();
+}
+
+#[tokio::test]
+async fn playlists() {
+    // For Subsonic
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+
+    subsonic_playlists_utility(subsonic_client).await;
+
+    // For Navidrome
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+
+    opensubsonic_playlists_utility(subsonic_client).await;
+
+    // For Ampache
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+
+    opensubsonic_playlists_utility(subsonic_client).await;
 }
