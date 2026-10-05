@@ -30,6 +30,173 @@ pub enum SubsonicErrorCode {
     RequestDataNotFound = 70,
 }
 
+/// An enumeration of possible podcast statuses.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PodcastStatus {
+    New,
+    Downloading,
+    Completed,
+    Error,
+    Deleted,
+    Skipped
+}
+
+/// A Podcast episode.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::PodcastEpisode>(r#"
+/// {
+///   "id": "7390",
+///   "parent": "7389",
+///   "isDir": "false",
+///   "title": "Jonas Gahr Støre",
+///   "album": "NRK – Hallo P3",
+///   "artist": "Podcast",
+///   "year": "2015",
+///   "coverArt": "7389",
+///   "size": "41808585",
+///   "contentType": "audio/mpeg",
+///   "suffix": "mp3",
+///   "duration": "2619",
+///   "bitRate": "128",
+///   "isVideo": "false",
+///   "created": "2015-09-07T20:07:31.000Z",
+///   "artistId": "453",
+///   "type": "podcast",
+///   "streamId": "7410",
+///   "channelId": "17",
+///   "description": "Jonas Gahr Støre fra Arbeiderpartiet er med i dagens partilederutspørring i Hallo P3!",
+///   "status": "completed",
+///   "publishDate": "2015-09-07T15:29:00.000Z"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct PodcastEpisode {
+    /// ID used for streaming podcast
+    pub stream_id: Option<Box<str>>,
+    /// ID of the podcast channel
+    pub channel_id: Box<str>,
+    /// Episode description
+    pub description: Option<Box<str>>,
+    /// Podcast status
+    pub status: PodcastStatus,
+    /// Date the episode was published [ISO 8601]
+    pub publish_date: Option<Box<str>>
+}
+
+/// A Podcast channel.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::PodcastChannel>(r#"
+/// {
+///   "id": "1",
+///   "url": "http://downloads.bbc.co.uk/podcasts/fivelive/drkarl/rss.xml",
+///   "title": "Dr Karl and the Naked Scientist",
+///   "description": "Dr Chris Smith aka The Naked Scientist with the latest news from the world of science and Dr Karl answers listeners' science questions.",
+///   "coverArt": "pod-1",
+///   "originalImageUrl": "http://downloads.bbc.co.uk/podcasts/fivelive/drkarl/drkarl.jpg",
+///   "status": "completed",
+///   "episode": [
+///     {
+///       "id": "34",
+///       "streamId": "523",
+///       "channelId": "1",
+///       "title": "Scorpions have re-evolved eyes",
+///       "description": "This week Dr Chris fills us in on the UK's largest free science festival, plus all this week's big scientific discoveries.",
+///       "publishDate": "2011-02-03T14:46:43",
+///       "status": "completed",
+///       "parent": "11",
+///       "isDir": "false",
+///       "year": "2011",
+///       "genre": "Podcast",
+///       "coverArt": "24",
+///       "size": "78421341",
+///       "contentType": "audio/mpeg",
+///       "suffix": "mp3",
+///       "duration": "3146",
+///       "bitRate": "128",
+///       "path": "Podcast/drkarl/20110203.mp3"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct PodcastChannel {
+    /// The channel ID
+    pub id: Box<str>,
+    /// Podcast channel URL
+    pub url: Box<str>,
+    /// The channel title
+    pub title: Option<Box<str>>,
+    /// The channel description
+    pub description: Option<Box<str>>,
+    /// ID used for retrieving cover art
+    pub cover_art: Option<Box<str>>,
+    /// URL for original image of podcast channel
+    pub original_image_url: Option<Box<str>>,
+    /// Channel status
+    pub status: PodcastStatus,
+    /// An error message
+    pub error_message: Option<Box<str>>,
+    /// Podcast episodes with this channel
+    #[serde(default)]
+    pub episode: Vec<PodcastEpisode>,
+}
+
+/// Podcasts.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::Podcasts>(r#"
+/// {
+///   "channel": [
+///     {
+///       "id": "7390",
+///       "url": "https://example.com/404",
+///       "parent": "7389",
+///       "isDir": "false",
+///       "title": "Jonas Gahr Støre",
+///       "album": "NRK – Hallo P3",
+///       "artist": "Podcast",
+///       "year": "2015",
+///       "coverArt": "7389",
+///       "size": "41808585",
+///       "contentType": "audio/mpeg",
+///       "suffix": "mp3",
+///       "duration": "2619",
+///       "bitRate": "128",
+///       "isVideo": "false",
+///       "created": "2015-09-07T20:07:31.000Z",
+///       "artistId": "453",
+///       "type": "podcast",
+///       "streamId": "7410",
+///       "channelId": "17",
+///       "description": "Jonas Gahr Støre fra Arbeiderpartiet er med i dagens partilederutspørring i Hallo P3!",
+///       "status": "completed",
+///       "publishDate": "2015-09-07T15:29:00.000Z"
+///     },
+///     {
+///       "id": "3",
+///       "url": "https://example.com/404",
+///       "status": "error",
+///       "errorMessage": "Not Found"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Podcasts {
+    /// Podcast channel(s)
+    #[serde(default)]
+    pub channel: Vec<PodcastChannel>
+}
+
 /// A chatMessage.
 /// # Example
 /// ```

@@ -240,4 +240,21 @@ impl<T: SubsonicServerInfo> Client<T> {
     pub async fn delete_playlist(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         self.query("/rest/deletePlaylist.view", &[("id", id)]).await
     }
+    /// Adds a new Podcast channel. Note: The user must be authorized for Podcast administration (see Settings > Users > User is allowed to administrate Podcasts).
+    ///
+    /// # Arguments
+    /// * `url` - The URL of the Podcast to add.
+    pub async fn create_podcast_channel(&self, url: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/createPodcastChannel.view", &[("url", url)]).await
+    }
+    /// Deletes a Podcast channel. Note: The user must be authorized for Podcast administration (see Settings > Users > User is allowed to administrate Podcasts).
+    ///
+    /// # Arguments
+    /// * `id` - The ID of the Podcast channel to delete.
+    pub async fn delete_podcast_channel(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/deletePodcastChannel.view", &[("id", id)]).await
+    }
+    pub async fn get_podcasts(&self, parameters: GetPodcastsParameters) -> Result<Podcasts, SubsonicError<T::ErrorData>> {
+        self.query("/rest/getPodcasts.view", &parameters).await
+    }
 }

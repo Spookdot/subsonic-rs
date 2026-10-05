@@ -512,3 +512,34 @@ impl CreatePlaylistParameters {
         slice
     }
 }
+
+/// Parameters for the [`crate::Client<T>::get_podcasts()`] method
+#[derive(Serialize, PartialEq, Eq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GetPodcastsParameters {
+    /// Whether to include Podcast episodes in the returned result.
+    pub include_episodes: bool,
+    /// If specified, only return the Podcast channel with this ID.
+    pub id: Option<Box<str>>,
+}
+
+impl Default for GetPodcastsParameters {
+    fn default() -> Self {
+        Self { 
+            include_episodes: true,
+            id: None
+        }
+    }
+}
+
+impl GetPodcastsParameters {
+    pub fn id(id: impl Into<Box<str>>) -> Self {
+        Self { id: Some(id.into()), ..Default::default() }
+    }
+    pub fn include_episodes(include_episodes: bool) -> Self {
+        Self { include_episodes, ..Default::default() }
+    }
+    pub fn all(id: impl Into<Box<str>>, include_episodes: bool) -> Self {
+        Self { id: Some(id.into()), include_episodes }
+    }
+}
