@@ -104,7 +104,7 @@ impl<T: SubsonicServerInfo> Client<T> {
         parameters: &TParameter
     ) -> Result<TResponse, SubsonicError<T::ErrorData>> 
     where
-        TParameter: Serialize, TResponse: DeserializeOwned + Serialize
+        TParameter: Serialize, TResponse: DeserializeOwned + Serialize + std::fmt::Debug
     {
         let url = format!("{}{}", self.url, path);
         let response = self.client.get(url)

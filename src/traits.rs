@@ -1,4 +1,5 @@
 use serde::{Serialize, de::DeserializeOwned};
+use std::fmt::Debug;
 
 /// Utility Trait to contain information on the specific API
 pub trait SubsonicServerInfo {
@@ -21,56 +22,56 @@ pub trait SubsonicServerInfo {
     /// 
     /// See: [`SubsonicResponse`](crate::subsonic::models::SubsonicResponse) 
     /// and [`OpenSubsonicResponse`](crate::opensubsonic::models::OpenSubsonicResponse)
-    type SubsonicResponse<T: DeserializeOwned + Serialize>: DeserializeOwned + SubsonicResponseTrait<T, Self::ErrorData>;
-    type ErrorData: ErrorDataTrait + std::fmt::Debug;
+    type SubsonicResponse<T: DeserializeOwned + Serialize + Debug>: DeserializeOwned + SubsonicResponseTrait<T, Self::ErrorData>;
+    type ErrorData: ErrorDataTrait + Debug;
     /// ReturnType for the [`Client::search3()`](crate::Client::search3()) method
     ///
     /// See: [`subsonic::models::SearchResult3`](crate::subsonic::models::SearchResult3)
     /// and [`opensubsonic::models::SearchResult3`](crate::opensubsonic::models::SearchResult3)
-    type SearchResult3: Serialize + DeserializeOwned;
+    type SearchResult3: Serialize + DeserializeOwned + Debug;
     /// ReturnType for the [`Client::search2()`](crate::Client::search2()) method
     ///
     /// See: [`subsonic::models::SearchResult2`](crate::subsonic::models::SearchResult2)
     /// and [`opensubsonic::models::SearchResult2`](crate::opensubsonic::models::SearchResult2)
-    type SearchResult2: Serialize + DeserializeOwned;
+    type SearchResult2: Serialize + DeserializeOwned + Debug;
     /// ReturnType for the [`Client::search()`](crate::Client::search()) method
     ///
     /// See: [`subsonic::models::SearchResult`](crate::subsonic::models::SearchResult)
     /// and [`opensubsonic::models::SearchResult`](crate::opensubsonic::models::SearchResult)
-    type SearchResult: Serialize + DeserializeOwned;
+    type SearchResult: Serialize + DeserializeOwned + Debug;
     /// Type used to represent songs in the API
     /// For example method [`Client::get_song()`](crate::Client::get_song())
     ///
     /// See: [`subsonic::models::Child`](crate::subsonic::models::Child)
     /// and [`opensubsonic::models::Child`](crate::opensubsonic::models::Child)
-    type Child: Serialize + DeserializeOwned;
+    type Child: Serialize + DeserializeOwned + Debug;
     /// Type used to represent a Bookmark
     /// For example method [`Client::get_bookmarks()`](crate::Client::get_bookmarks())
     ///
     /// See: [`subsonic::models::Bookmark`](crate::subsonic::models::Bookmark)
     /// and [`opensubsonic::models::Bookmark`](crate::opensubsonic::models::Bookmark)
-    type Bookmarks: Serialize + DeserializeOwned;
+    type Bookmarks: Serialize + DeserializeOwned + Debug;
     /// Type used to represent InternetRadioStations
     /// For example method [`Client::get_internet_radio_stations()`](crate::Client::get_internet_radio_stations())
     ///
     /// See: 
     /// See: [`subsonic::models::InternetRadioStations`](crate::subsonic::models::InternetRadioStations)
     /// and [`opensubsonic::models::InternetRadioStations`](crate::opensubsonic::models::InternetRadioStations)
-    type InternetRadioStations: Serialize + DeserializeOwned;
+    type InternetRadioStations: Serialize + DeserializeOwned + Debug;
     /// Type used to represent Playlists
     /// For example method [`Client::create_playlist()`](crate::Client::create_playlist())
     ///
     /// See: 
     /// See: [`subsonic::models::PlaylistWithSongs`](crate::subsonic::models::PlaylistWithSongs)
     /// and [`opensubsonic::models::PlaylistWithSongs`](crate::opensubsonic::models::PlaylistWithSongs)
-    type PlaylistWithSongs: Serialize + DeserializeOwned;
+    type PlaylistWithSongs: Serialize + DeserializeOwned + Debug;
     /// Type used to represent a collection of Playlists
     /// For example method [`Client::get_playlists()`](crate::Client::get_playlists())
     ///
     /// See: 
     /// See: [`subsonic::models::Playlists`](crate::subsonic::models::Playlists)
     /// and [`opensubsonic::models::Playlists`](crate::opensubsonic::models::Playlists)
-    type Playlists: Serialize + DeserializeOwned;
+    type Playlists: Serialize + DeserializeOwned + Debug;
 }
 
 // TODO rename Trait

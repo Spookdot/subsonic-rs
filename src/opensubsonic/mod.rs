@@ -15,7 +15,7 @@ pub struct OpenSubsonic;
 impl SubsonicServerInfo for OpenSubsonic {
     type SubsonicAuthentication = OpenSubsonicAuthentication;
     type BasicResponse = OpenSubsonicBasicResponse;
-    type SubsonicResponse<T: DeserializeOwned + Serialize> = OpenSubsonicResponse<T>;
+    type SubsonicResponse<T: DeserializeOwned + Serialize + std::fmt::Debug> = OpenSubsonicResponse<T>;
     type ErrorData = ErrorData;
     type SearchResult3 = SearchResult3;
     type SearchResult2 = SearchResult2;
