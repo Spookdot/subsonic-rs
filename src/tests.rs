@@ -334,8 +334,11 @@ async fn get_lyrics_by_song_id() {
     let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
+    let get_song = subsonic_client.search3(Search3Parameters::song("Letting You", 50)).await.unwrap();
+    let song_id = &get_song.song[0].id;
+
     // Retrieve lyrics for song "Letting You" by Nine Inch Nails
-    let get_lyrics_response = subsonic_client.get_lyrics_by_song_id("eMCrMHEMJG7IMu3soo0wsg").await.unwrap();
+    let get_lyrics_response = subsonic_client.get_lyrics_by_song_id(song_id).await.unwrap();
     let lyrics = get_lyrics_response.structured_lyrics[0].to_owned();
 
     assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", lyrics.display_title);
@@ -351,8 +354,11 @@ async fn get_lyrics_by_song_id_enhanced() {
     let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
     let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
 
+    let get_song = subsonic_client.search3(Search3Parameters::song("Letting You", 50)).await.unwrap();
+    let song_id = &get_song.song[0].id;
+
     // Retrieve lyrics for song "Letting You" by Nine Inch Nails
-    let get_lyrics_response = subsonic_client.get_lyrics_by_song_id_enhanced("eMCrMHEMJG7IMu3soo0wsg").await.unwrap();
+    let get_lyrics_response = subsonic_client.get_lyrics_by_song_id_enhanced(song_id).await.unwrap();
     let lyrics = get_lyrics_response.structured_lyrics[0].to_owned();
 
     assert_eq!(lyrics.display_title.as_deref(), Some("Letting You"), "Got {:?} instead of Letting You", lyrics.display_title);
