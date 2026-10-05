@@ -22,7 +22,7 @@ pub trait SubsonicServerInfo {
     /// See: [`SubsonicResponse`](crate::subsonic::models::SubsonicResponse) 
     /// and [`OpenSubsonicResponse`](crate::opensubsonic::models::OpenSubsonicResponse)
     type SubsonicResponse<T: DeserializeOwned + Serialize>: DeserializeOwned + SubsonicResponseTrait<T, Self::ErrorData>;
-    type ErrorData: ErrorDataTrait;
+    type ErrorData: ErrorDataTrait + std::fmt::Debug;
     /// ReturnType for the [`Client::search3()`](crate::Client::search3()) method
     ///
     /// See: [`subsonic::models::SearchResult3`](crate::subsonic::models::SearchResult3)

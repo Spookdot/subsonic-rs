@@ -33,47 +33,52 @@ const AMPACHE: SubsonicLoginViaToken = SubsonicLoginViaToken {
 
 const TEST_PLAYLIST_NAME: &str = "spooky-rust-subsonic-test";
 
+fn create_subsonic_client() -> SubsonicClient {
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
+    SubsonicClient::new(SUBSONIC.url, parameters)
+}
+
+fn create_navidrome_client() -> OpenSubsonicClient {
+    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
+    OpenSubsonicClient::new(NAVIDROME.url, parameters)
+}
+
+fn create_ampache_client() -> OpenSubsonicClient {
+    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
+    OpenSubsonicClient::new(AMPACHE.url, parameters)
+}
+
 #[tokio::test]
 async fn ping() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
-
-    let ping_response_result = subsonic_client.ping().await;
-    ping_response_result.unwrap();
+    let subsonic_client = create_subsonic_client();
+    subsonic_client.ping().await.unwrap();
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
-
+    let subsonic_client = create_navidrome_client();
     subsonic_client.ping().await.unwrap();
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
-
+    let subsonic_client = create_ampache_client();
     subsonic_client.ping().await.unwrap();
 }
 
 #[tokio::test]
 async fn get_license() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let license = subsonic_client.get_license().await.unwrap();
     assert!(license.valid, "{:#?}", license);
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let license = subsonic_client.get_license().await.unwrap();
     assert!(license.valid, "{:#?}", license);
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let license = subsonic_client.get_license().await.unwrap();
     assert!(license.valid, "{:#?}", license);
@@ -82,8 +87,7 @@ async fn get_license() {
 #[tokio::test]
 async fn search() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let search_response = subsonic_client.search(SearchParameters::artist("PeerGynt Lobogris")).await.unwrap();
 
@@ -93,8 +97,7 @@ async fn search() {
     // Navidrome doesn't support because deprecated
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let search_response = subsonic_client.search(SearchParameters::artist("Crust")).await.unwrap();
     
@@ -105,16 +108,14 @@ async fn search() {
 #[tokio::test]
 async fn search2() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let search2_response = subsonic_client.search2(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
 
     assert_eq!(search2_response.album.len(), 1, "{:#?}", search2_response);
     assert_eq!(search2_response.album[0].album.as_deref(), Some("A Million Ways To Waste A Summer"), "{:#?}", search2_response);
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let search2_response = subsonic_client.search2(Search3Parameters::query("Pavel Tukki")).await.unwrap();
     
@@ -122,8 +123,7 @@ async fn search2() {
     assert_eq!(search2_response.artist[0].name.as_ref(), "Pavel Tukki");
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let search2_response = subsonic_client.search2(Search3Parameters::query("Crust")).await.unwrap();
     
@@ -134,8 +134,7 @@ async fn search2() {
 #[tokio::test]
 async fn search3() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let search3_response = subsonic_client.search3(Search3Parameters::query("A Million Ways To Waste A Summer")).await.unwrap();
 
@@ -143,8 +142,7 @@ async fn search3() {
     assert_eq!(search3_response.album[0].name, "A Million Ways To Waste A Summer".into(), "{:#?}", search3_response);
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let search3_response = subsonic_client.search3(Search3Parameters::query("Pavel Tukki")).await.unwrap();
     
@@ -152,8 +150,7 @@ async fn search3() {
     assert_eq!(search3_response.artist[0].name.as_ref(), "Pavel Tukki");
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let search3_response = subsonic_client.search3(Search3Parameters::query("Crust")).await.unwrap();
     
@@ -164,8 +161,7 @@ async fn search3() {
 #[tokio::test]
 async fn star_unstar_song() {
     // Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let client = create_subsonic_client();
 
     // Search Song
     let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
@@ -204,8 +200,7 @@ async fn star_unstar_song() {
     }
 
     // Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let client = create_navidrome_client();
 
     // Search Song
     let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
@@ -245,8 +240,7 @@ async fn star_unstar_song() {
     }
 
     // Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let client = create_ampache_client();
 
     // Search Song
     let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
@@ -290,8 +284,7 @@ async fn star_unstar_song() {
 async fn get_lyrics() {
     // TODO can't seem to get a response for any of these combinations
     // For Subsonic
-    // let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    // let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    // let subsonic_client = create_subsonic_client();
 
     // Title Only
     // let get_lyrics_parameters = GetLyricsParameters::title("");
@@ -306,8 +299,7 @@ async fn get_lyrics() {
     // let get_lyrics_response = subsonic_client.get_lyrics(get_lyrics_parameters).await.unwrap();
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     // TODO can't seem to get a response for title only and artist only
     // Title Only
@@ -331,8 +323,7 @@ async fn get_lyrics() {
 #[tokio::test]
 async fn get_lyrics_by_song_id() {
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let get_song = subsonic_client.search3(Search3Parameters::song("Letting You", 50)).await.unwrap();
     let song_id = &get_song.song[0].id;
@@ -351,8 +342,7 @@ async fn get_lyrics_by_song_id() {
 #[tokio::test]
 async fn get_lyrics_by_song_id_enhanced() {
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let get_song = subsonic_client.search3(Search3Parameters::song("Letting You", 50)).await.unwrap();
     let song_id = &get_song.song[0].id;
@@ -373,8 +363,7 @@ async fn get_lyrics_by_song_id_enhanced() {
 async fn get_open_subsonic_extensions() {
     // Not supported by Subsonic
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let extensions = subsonic_client.get_open_subsonic_extensions().await.unwrap();
     // Filter for the songLyrics extension and error if it is missing
@@ -384,8 +373,7 @@ async fn get_open_subsonic_extensions() {
     assert_eq!(song_lyrics_extension.versions[1], 2, "SongLyrics Extension Version 2 should be supported");
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let extensions = subsonic_client.get_open_subsonic_extensions().await.unwrap();
     assert_ne!(extensions.len(), 0, "No OpenSubsonic Extensions supported");
@@ -394,8 +382,7 @@ async fn get_open_subsonic_extensions() {
 #[tokio::test]
 async fn get_music_folders() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
     
     let music_folders = subsonic_client.get_music_folders().await.unwrap();
     assert_eq!(music_folders.music_folder.len(), 1);
@@ -405,8 +392,7 @@ async fn get_music_folders() {
     assert_eq!(music_folder.name.as_deref(), "Music".into());
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
     
     let music_folders = subsonic_client.get_music_folders().await.unwrap();
     assert_eq!(music_folders.music_folder.len(), 1);
@@ -423,8 +409,7 @@ async fn get_music_folders() {
 #[tokio::test]
 async fn create_user() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let create_user_parameters = CreateUserParameters::with_default_roles("test", "test", "test");
     let create_user_result = subsonic_client.create_user(create_user_parameters).await;
@@ -437,8 +422,7 @@ async fn create_user() {
     }
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let create_user_parameters = CreateUserParameters::with_default_roles("test", "test", "test");
     let create_user_result = subsonic_client.create_user(create_user_parameters).await;
@@ -458,8 +442,7 @@ async fn create_user() {
 #[tokio::test]
 async fn delete_user() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let delete_user_result = subsonic_client.delete_user("test").await;
 
@@ -471,8 +454,7 @@ async fn delete_user() {
     }
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let delete_user_result = subsonic_client.delete_user("test").await;
 
@@ -493,8 +475,7 @@ async fn chat_messages() {
     let message = "this is cool stuff";
 
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     subsonic_client.add_chat_message(message).await.unwrap();
     let messages = subsonic_client.get_chat_messages(None).await.unwrap();
@@ -502,8 +483,7 @@ async fn chat_messages() {
     assert!(!filtered_messages.is_empty(), "No messages found matching the preset one\n{:#?}", messages);
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let add_chat_message_result = subsonic_client.add_chat_message(message).await;
     if let Err(SubsonicError::Failed(e)) = add_chat_message_result {
@@ -519,8 +499,7 @@ async fn chat_messages() {
 #[tokio::test]
 async fn change_password() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let change_password_result = subsonic_client.change_password(SUBSONIC.username, SUBSONIC.password).await;
     if let Err(SubsonicError::Failed(e)) = change_password_result {
@@ -530,8 +509,7 @@ async fn change_password() {
     }
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let change_password_result = subsonic_client.change_password(SUBSONIC.username, SUBSONIC.password).await;
     if let Err(SubsonicError::Failed(e)) = change_password_result {
@@ -544,8 +522,7 @@ async fn change_password() {
 #[tokio::test]
 async fn bookmarks() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
     
     // Fetch a song to verify the bookmarks with
     let search3_response = subsonic_client.search3(Search3Parameters::query("e")).await.unwrap();
@@ -570,8 +547,7 @@ async fn bookmarks() {
     // TODO can't parse Navidrome response for some reason
     // For Navidrome
     /*
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
     
     // Fetch a song to verify the bookmarks with
     let search3_response = subsonic_client.search3(Search3Parameters::query("")).await.unwrap();
@@ -598,8 +574,7 @@ async fn bookmarks() {
     // https://demo.ampache.dev/rest/createBookmark?id=so-5&position=0&apiKey=demodemo&v=1.16.0&f=json&c=rust-subsonic-library
     /*
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
     
     // Fetch a song to verify the bookmarks with
     let search3_response = subsonic_client.search3(Search3Parameters::query("")).await.unwrap();
@@ -628,8 +603,7 @@ async fn create_internet_radio_stations() {
     let radio_parameters = CreateInternetRadioStationParameters::without_homepage("e", "e");
 
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let create_result = subsonic_client.create_internet_radio_station(radio_parameters.clone()).await;
     if let Err(SubsonicError::Failed(e)) = create_result {
@@ -639,8 +613,7 @@ async fn create_internet_radio_stations() {
     }
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let create_result = subsonic_client.create_internet_radio_station(radio_parameters.clone()).await;
     if let Err(SubsonicError::Failed(e)) = create_result {
@@ -652,8 +625,7 @@ async fn create_internet_radio_stations() {
     // For Ampache
     // TODO currently giving different error than expected, skipping
     /*
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let create_result = subsonic_client.create_internet_radio_station(radio_parameters.clone()).await;
     if let Err(SubsonicError::Failed(e)) = create_result {
@@ -667,8 +639,7 @@ async fn create_internet_radio_stations() {
 #[tokio::test]
 async fn delete_internet_radio_stations() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let delete_result = subsonic_client.delete_internet_radio_station("").await;
     if let Err(SubsonicError::Failed(e)) = delete_result {
@@ -678,8 +649,7 @@ async fn delete_internet_radio_stations() {
     }
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let delete_result = subsonic_client.delete_internet_radio_station("").await;
     if let Err(SubsonicError::Failed(e)) = delete_result {
@@ -691,8 +661,7 @@ async fn delete_internet_radio_stations() {
     // For Ampache
     // TODO figure out why it returns 70RequestDataNotFound instead of 50NotAuthorized
     /*
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let delete_result = subsonic_client.delete_internet_radio_station("e").await;
     if let Err(SubsonicError::Failed(e)) = delete_result {
@@ -706,22 +675,19 @@ async fn delete_internet_radio_stations() {
 #[tokio::test]
 async fn get_internet_radio_stations() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
     assert!(radio_stations.internet_radio_station.is_empty(), "{radio_stations:#?}");
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
+    let subsonic_client = create_navidrome_client();
 
     let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
     assert!(radio_stations.internet_radio_station.is_empty(), "{radio_stations:#?}");
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     let radio_stations = subsonic_client.get_internet_radio_stations().await.unwrap();
     assert_eq!(radio_stations.internet_radio_station[0].id, "li-5".into(), "{radio_stations:#?}");
@@ -800,21 +766,15 @@ async fn subsonic_playlists_utility(client: SubsonicClient) {
 #[tokio::test]
 async fn playlists() {
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
-
+    let subsonic_client = create_subsonic_client();
     subsonic_playlists_utility(subsonic_client).await;
 
     // For Navidrome
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", NAVIDROME.username, NAVIDROME.password, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(NAVIDROME.url, parameters);
-
+    let subsonic_client = create_navidrome_client();
     opensubsonic_playlists_utility(subsonic_client).await;
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
-
+    let subsonic_client = create_ampache_client();
     opensubsonic_playlists_utility(subsonic_client).await;
 }
 
@@ -824,15 +784,13 @@ async fn podcasts() {
     // Note: As of writing, Navidrome does not support Podcasts
 
     // For Subsonic
-    let parameters = SubsonicParameters::hashed_password("subsonic rust", SUBSONIC.username, SUBSONIC.password, "1.16.0");
-    let subsonic_client = SubsonicClient::new(SUBSONIC.url, parameters);
+    let subsonic_client = create_subsonic_client();
 
     subsonic_client.get_podcasts(GetPodcastsParameters::default()).await.unwrap();
     subsonic_client.get_podcasts(GetPodcastsParameters::include_episodes(false)).await.unwrap();
 
     // For Ampache
-    let parameters = SubsonicParameters::token("subsonic rust", AMPACHE.token, "1.16.0");
-    let subsonic_client = OpenSubsonicClient::new(AMPACHE.url, parameters);
+    let subsonic_client = create_ampache_client();
 
     subsonic_client.get_podcasts(GetPodcastsParameters::default()).await.unwrap();
     subsonic_client.get_podcasts(GetPodcastsParameters::include_episodes(false)).await.unwrap();
