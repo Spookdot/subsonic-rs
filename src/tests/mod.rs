@@ -1,4 +1,4 @@
-use crate::opensubsonic::models::{EnhancedLyricsList, LyricsList, OpenSubsonicExtension};
+use crate::{opensubsonic::{OpenSubsonic, models::{EnhancedLyricsList, LyricsList, OpenSubsonicExtension}}, subsonic::Subsonic};
 
 use super::*;
 
@@ -263,4 +263,55 @@ async fn subsonic_playlists(client: &SubsonicClient) {
 async fn podcasts<T: SubsonicServerInfo>(client: &Client<T>) {
     client.get_podcasts(GetPodcastsParameters::default()).await.unwrap();
     client.get_podcasts(GetPodcastsParameters::include_episodes(false)).await.unwrap();
+}
+
+async fn subsonic_shares(client: &SubsonicClient) 
+    -> Result<(), SubsonicError<<Subsonic as traits::SubsonicServerInfo>::ErrorData>> 
+{
+    let search3_response = client.search3(Search3Parameters::query("e")).await?;
+    let song_id = search3_response.song[0].id.as_ref();
+    
+    // Create a Share
+    let share = client.create_share(CreateShareParameters::one(song_id)).await?;
+    let share_id = share.share[0].id.as_ref();
+
+    // Check that said share now exists
+    let shares = client.get_shares().await?;
+    let filtered_shares: Vec<_> = shares.share.into_iter().filter(|x| x.id.as_ref() == share_id).collect();
+    assert!(!filtered_shares.is_empty());
+
+    // Delete Share
+    client.delete_share(share_id).await?;
+
+    // Check that said share doesn't exist anymore
+    let shares = client.get_shares().await?;
+    let filtered_shares: Vec<_> = shares.share.into_iter().filter(|x| x.id.as_ref() == share_id).collect();
+    assert!(filtered_shares.is_empty());
+    Ok(())
+}
+
+async fn opensubsonic_shares(client: &OpenSubsonicClient) 
+    -> Result<(), SubsonicError<<OpenSubsonic as traits::SubsonicServerInfo>::ErrorData>> 
+{
+    let search3_response = client.search3(Search3Parameters::query("")).await?;
+    let song_id = search3_response.song[0].id.as_ref();
+    
+    // Create a Share
+    let share = client.create_share(CreateShareParameters::one(song_id)).await?;
+    assert!(!share.share.is_empty(), "{share:#?}");
+    let share_id = share.share[0].id.as_ref();
+
+    // Check that said share now exists
+    let shares = client.get_shares().await?;
+    let filtered_shares: Vec<_> = shares.share.into_iter().filter(|x| x.id.as_ref() == share_id).collect();
+    assert!(!filtered_shares.is_empty());
+
+    // Delete Share
+    client.delete_share(share_id).await?;
+
+    // Check that said share doesn't exist anymore
+    let shares = client.get_shares().await?;
+    let filtered_shares: Vec<_> = shares.share.into_iter().filter(|x| x.id.as_ref() == share_id).collect();
+    assert!(filtered_shares.is_empty());
+    Ok(())
 }

@@ -116,9 +116,11 @@ impl<T: SubsonicServerInfo> Client<T> {
         // let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
         let text = response.text().await?;
         let subsonic_result = serde_json::from_str(text.as_str());
-        if let Err(e) = subsonic_result {
-            panic!("{:?}\n{:#?}", e, text);
-        }
+
+        // Pretty print the JSON in case serde can't parse it
+        #[cfg(debug_assertions)]
+        let subsonic_result = subsonic_result.inspect_err(|e| eprintln!("{:?}\n{:#?}", e, text));
+
         let subsonic_response: T::SubsonicResponse<_> = subsonic_result?;
         let subsonic_data = subsonic_response.into_subsonic_data();
 
@@ -254,7 +256,29 @@ impl<T: SubsonicServerInfo> Client<T> {
     pub async fn delete_podcast_channel(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         self.query("/rest/deletePodcastChannel.view", &[("id", id)]).await
     }
+    /// Returns all Podcast channels the server subscribes to, and (optionally) their episodes.
+    /// This method can also be used to return details for only one channel - refer to the `id` parameter.
+    /// A typical use case for this method would be to first retrieve all channels without episodes,
+    /// and then retrieve all episodes for the single channel the user selects.
     pub async fn get_podcasts(&self, parameters: GetPodcastsParameters) -> Result<Podcasts, SubsonicError<T::ErrorData>> {
         self.query("/rest/getPodcasts.view", &parameters).await
+    }
+    /// Creates a public URL that can be used by anyone to stream music or video from the server.
+    /// The URL is short and suitable for posting on Facebook, Twitter etc.
+    /// Note: The user must be authorized to share (see Settings > Users > User is allowed to share files with anyone).
+    pub async fn create_share(&self, parameters: CreateShareParameters) -> Result<T::Shares, SubsonicError<T::ErrorData>> {
+        self.query("/rest/createShare.view", &parameters.into_serializable()).await
+    }
+    /// Returns information about shared media this user is allowed to manage. Takes no extra parameters.
+    pub async fn get_shares(&self) -> Result<T::Shares, SubsonicError<T::ErrorData>> {
+        self.query("/rest/getShares.view", &()).await
+    }
+    /// Deletes an existing share.
+    ///
+    /// # Arguments
+    /// * `id` - ID of the share to delete, as obtained by
+    ///   [`getShares`](Client<T>::get_shares()).
+    pub async fn delete_share(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/deleteShare.view", &[("id", id)]).await
     }
 }

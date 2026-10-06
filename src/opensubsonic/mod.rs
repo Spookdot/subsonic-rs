@@ -25,6 +25,7 @@ impl SubsonicServerInfo for OpenSubsonic {
     type InternetRadioStations = InternetRadioStations;
     type PlaylistWithSongs = PlaylistWithSongs;
     type Playlists = Playlists;
+    type Shares = Shares;
 }
 
 impl Client<OpenSubsonic> {

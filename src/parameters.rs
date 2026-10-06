@@ -543,3 +543,105 @@ impl GetPodcastsParameters {
         Self { id: Some(id.into()), include_episodes }
     }
 }
+
+
+/// Parameters for the [`crate::Client<T>::create_share()`] method
+#[derive(Serialize, Default, PartialEq, Eq, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateShareParameters {
+    /// ID of a song, album or video to share. Use one `id` parameter for each entry to share.
+    pub id: Box<[Box<str>]>,
+    /// A user-defined description that will be displayed to people visiting the shared media.
+    pub description: Option<Box<str>>,
+    /// The time at which the share expires. Given as milliseconds since 1970.
+    pub expires: Option<Box<str>>,
+}
+
+impl CreateShareParameters {
+    pub fn new(
+        id: impl Into<Box<[Box<str>]>>, 
+        description: Option<impl Into<Box<str>>>, 
+        expires: Option<impl Into<Box<str>>>
+    ) -> Self {
+        Self { 
+            id: id.into(),
+            description: description.map(Into::into),
+            expires: expires.map(Into::into)
+        }
+    }
+    pub fn one(id: impl Into<Box<str>>) -> Self {
+        Self { 
+            id: [id.into()].into(), 
+            ..Default::default() 
+        }
+    }
+    pub fn multiple(id: impl Into<Box<[Box<str>]>>) -> Self {
+        Self {
+            id: id.into(),
+            ..Default::default()
+        }
+    }
+    pub fn one_with_description(id: impl Into<Box<str>>, description: impl Into<Box<str>>) -> Self {
+        Self { 
+            id: [id.into()].into(), 
+            description: Some(description.into()),
+            ..Default::default() 
+        }
+    }
+    pub fn multiple_with_description(id: impl Into<Box<[Box<str>]>>, description: impl Into<Box<str>>) -> Self {
+        Self {
+            id: id.into(),
+            description: Some(description.into()),
+            ..Default::default()
+        }
+    }
+    pub fn one_with_expiration(id: impl Into<Box<str>>, expires: impl Into<Box<str>>) -> Self {
+        Self { 
+            id: [id.into()].into(), 
+            expires: Some(expires.into()),
+            ..Default::default() 
+        }
+    }
+    pub fn multiple_with_expiration(id: impl Into<Box<[Box<str>]>>, expires: impl Into<Box<str>>) -> Self {
+        Self {
+            id: id.into(),
+            expires: Some(expires.into()),
+            ..Default::default()
+        }
+    }
+    pub fn one_with_all(
+        id: impl Into<Box<str>>, 
+        description: impl Into<Box<str>>,
+        expires: impl Into<Box<str>>
+    ) -> Self {
+        Self { 
+            id: [id.into()].into(), 
+            description: Some(description.into()),
+            expires: Some(expires.into()),
+        }
+    }
+    pub fn multiple_with_all(
+        id: impl Into<Box<[Box<str>]>>, 
+        description: impl Into<Box<str>>,
+        expires: impl Into<Box<str>>
+    ) -> Self {
+        Self {
+            id: id.into(),
+            description: Some(description.into()),
+            expires: Some(expires.into()),
+        }
+    }
+    pub fn into_serializable(self) -> Vec<(&'static str, Box<str>)> {
+        let mut slice: Vec<(&'static str, Box<str>)> = Vec::new();
+        for i in self.id {
+            slice.push(("id", i));
+        }
+        if let Some(description) = self.description {
+            slice.push(("description", description));
+        }
+        if let Some(expires) = self.expires {
+            slice.push(("expires", expires));
+        }
+        slice
+    }
+}

@@ -159,3 +159,8 @@ async fn podcasts() {
     tests::podcasts(&create_client()).await;
 }
 */
+
+#[tokio::test]
+async fn shares() {
+    tests::opensubsonic_shares(&create_client()).await.unwrap();
+}

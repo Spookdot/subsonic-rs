@@ -24,5 +24,6 @@ impl SubsonicServerInfo for Subsonic {
     type InternetRadioStations = InternetRadioStations;
     type PlaylistWithSongs = PlaylistWithSongs;
     type Playlists = Playlists;
+    type Shares = Shares;
 }
 

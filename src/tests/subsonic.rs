@@ -136,3 +136,13 @@ async fn playlists() {
 async fn podcasts() {
     tests::podcasts(&create_client()).await;
 }
+
+#[tokio::test]
+async fn shares() {
+    let result = tests::subsonic_shares(&create_client()).await;
+    if let Err(SubsonicError::Failed(error)) = result {
+        assert_eq!(error.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!();
+    }
+}
