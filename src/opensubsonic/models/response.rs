@@ -252,7 +252,7 @@ where
     where
         D: serde::Deserializer<'de> 
     {
-        enum Field { Status, Version, OpenSubsonic, ServerVersion, Type, Additional }
+        enum Field { Status, Version, OpenSubsonic, ServerVersion, Type, Error, Additional }
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -278,6 +278,7 @@ where
                             "openSubsonic" => Ok(Field::OpenSubsonic),
                             "serverVersion" => Ok(Field::ServerVersion),
                             "type" => Ok(Field::Type),
+                            "error" => Ok(Field::Error),
                             _ => Ok(Field::Additional),
                         }
                     }
@@ -343,11 +344,17 @@ where
                             }
                             type_ = Some(map.next_value()?);
                         },
+                        Field::Error => {
+                            if additional.is_some() {
+                                return Err(de::Error::duplicate_field("additional"));
+                            }
+                            additional = Some(UntaggedResult::Err(map.next_value()?));
+                        }
                         Field::Additional => {
                             if additional.is_some() {
                                 return Err(de::Error::duplicate_field("additional"));
                             }
-                            additional = Some(map.next_value()?);
+                            additional = Some(UntaggedResult::Ok(map.next_value()?));
                         },
                     }
                 }

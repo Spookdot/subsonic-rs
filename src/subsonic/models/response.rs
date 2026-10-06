@@ -217,7 +217,7 @@ where
     where
         D: serde::Deserializer<'de> 
     {
-        enum Field { Status, Version, Additional }
+        enum Field { Status, Version, Additional, Error }
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -240,6 +240,7 @@ where
                         match value {
                             "status" => Ok(Field::Status),
                             "version" => Ok(Field::Version),
+                            "error" => Ok(Field::Error),
                             _ => Ok(Field::Additional),
                         }
                     }
@@ -284,11 +285,17 @@ where
                             }
                             version = Some(map.next_value()?);
                         },
+                        Field::Error => {
+                            if additional.is_some() {
+                                return Err(de::Error::duplicate_field("additional"));
+                            }
+                            additional = Some(UntaggedResult::Err(map.next_value()?));
+                        }
                         Field::Additional => {
                             if additional.is_some() {
                                 return Err(de::Error::duplicate_field("additional"));
                             }
-                            additional = Some(map.next_value()?);
+                            additional = Some(UntaggedResult::Ok(map.next_value()?));
                         },
                     }
                 }
