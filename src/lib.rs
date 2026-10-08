@@ -49,6 +49,11 @@ pub mod traits;
 #[cfg(test)]
 mod tests;
 
+use bytes::Bytes;
+use futures::Stream;
+use http::HeaderMap;
+use http::HeaderValue;
+use reqwest::Error;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use thiserror::Error;
@@ -67,6 +72,8 @@ pub enum SubsonicError<T: ErrorDataTrait> {
     Failed(#[from] T),
     #[error("Deserialization failed at {url} for {body}")]
     Deserialization { url: Box<str>, body: Box<str>, serde_error: serde_json::Error },
+    #[error("Content-Type Header missing in response")]
+    ContentTypeHeaderMissing,
 }
 
 /// A Client for the Subsonic API and OpenSubsonic
@@ -98,6 +105,23 @@ impl<T: SubsonicServerInfo> Client<T> {
             phantom: std::marker::PhantomData
         }
     }
+    async fn make_request<TParameter: Serialize>(
+        &self,
+        path: &str,
+        parameters: &TParameter
+    ) -> Result<reqwest::Response, SubsonicError<T::ErrorData>> {
+        let url = format!("{}{}", self.url, path);
+        let response = self.client.get(url)
+            .query(&self.parameters)
+            .query(parameters)
+            .send()
+            .await?;
+        Ok(response)
+    }
+    fn verify_content_type(&self, headers: &HeaderMap<HeaderValue>) -> Result<bool, SubsonicError<T::ErrorData>> {
+        let content_type = headers.get("content-type").ok_or(SubsonicError::ContentTypeHeaderMissing)?;
+        Ok(content_type.to_str().unwrap().contains("application/json"))
+    }
     async fn query<TParameter, TResponse>(
         &self, 
         path: &str, 
@@ -106,14 +130,8 @@ impl<T: SubsonicServerInfo> Client<T> {
     where
         TParameter: Serialize, TResponse: DeserializeOwned + Serialize + std::fmt::Debug
     {
-        let url = format!("{}{}", self.url, path);
-        let response = self.client.get(url)
-            .query(&self.parameters)
-            .query(parameters)
-            .send()
-            .await?;
+        let response = self.make_request(path, &parameters).await?;
 
-        // let subsonic_response: T::SubsonicResponse<_> = response.json().await?;
         let text = response.text().await?;
         let subsonic_result = serde_json::from_str(text.as_str());
 
@@ -125,6 +143,15 @@ impl<T: SubsonicServerInfo> Client<T> {
         let subsonic_data = subsonic_response.into_subsonic_data();
 
         Ok(subsonic_data.into_additional()?)
+    }
+    pub async fn download(&self, id: &str) -> Result<impl Stream<Item = Result<Bytes, Error>>, SubsonicError<T::ErrorData>> {
+        let response = self.make_request("/rest/download.view", &[("id", id)]).await?;
+
+        if self.verify_content_type(response.headers())? {
+            let data: T::SubsonicResponse<()> = response.json().await?;
+            return Err(SubsonicError::Failed(data.into_subsonic_data().into_additional().unwrap_err()));
+        }
+        Ok(response.bytes_stream())
     }
     /// Used to test the connectivity with the server.
     pub async fn ping(&self) -> Result<(), SubsonicError<T::ErrorData>> {

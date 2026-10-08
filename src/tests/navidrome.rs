@@ -164,3 +164,10 @@ async fn podcasts() {
 async fn shares() {
     tests::opensubsonic_shares(&create_client()).await.unwrap();
 }
+
+#[tokio::test]
+async fn download() {
+    let client = create_client();
+    tests::download_intentional_error(&client).await;
+    tests::opensubsonic_download(&client).await;
+}

@@ -146,3 +146,10 @@ async fn shares() {
         panic!();
     }
 }
+
+#[tokio::test]
+async fn download() {
+    let client = create_client();
+    tests::download_intentional_error(&client).await;
+    tests::subsonic_download(&client).await;
+}

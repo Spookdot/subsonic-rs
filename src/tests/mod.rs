@@ -1,3 +1,5 @@
+use futures::StreamExt;
+
 use crate::{opensubsonic::{OpenSubsonic, models::{EnhancedLyricsList, LyricsList, OpenSubsonicExtension}}, subsonic::Subsonic};
 
 use super::*;
@@ -314,4 +316,37 @@ async fn opensubsonic_shares(client: &OpenSubsonicClient)
     let filtered_shares: Vec<_> = shares.share.into_iter().filter(|x| x.id.as_ref() == share_id).collect();
     assert!(filtered_shares.is_empty());
     Ok(())
+}
+
+async fn download_intentional_error<T: SubsonicServerInfo>(client: &Client<T>) -> T::ErrorData {
+    let mut result = client.download("").await;
+    if let Err(SubsonicError::Failed(error_data)) = result {
+        error_data
+    } else {
+        if let Ok(result) = result.as_mut() {
+            panic!(
+                "{:?}\n{:?}", 
+                std::any::type_name_of_val(result),
+                result.next().await
+            );
+        }
+        let error = result.err().unwrap();
+        panic!("{error:?}");
+    }
+}
+
+async fn subsonic_download(client: &SubsonicClient) {
+    let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
+    let song_id = search3_response.song[0].id.as_ref();
+
+    let stream = client.download(song_id).await.unwrap();
+    assert_ne!(stream.count().await, 0, "Stream is empty");
+}
+
+async fn opensubsonic_download(client: &OpenSubsonicClient) {
+    let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
+    let song_id = search3_response.song[0].id.as_ref();
+
+    let stream = client.download(song_id).await.unwrap();
+    assert_ne!(stream.count().await, 0, "Stream is empty");
 }
