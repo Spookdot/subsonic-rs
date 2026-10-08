@@ -1,3 +1,4 @@
+use crate::tests::opensubsonic;
 use crate::*;
 
 const AMPACHE: super::SubsonicLoginViaToken = super::SubsonicLoginViaToken {
@@ -48,7 +49,10 @@ async fn search3() {
 
 #[tokio::test]
 async fn star_unstar_song() {
-    tests::star_unstar_song_opensubsonic(&create_client()).await;
+    let client = create_client();
+    let song_id = opensubsonic::get_random_song_id(&client).await;
+
+    tests::star_unstar_song_opensubsonic(&client, &song_id).await;
 }
 
 // TODO Add working example
@@ -183,7 +187,10 @@ async fn podcasts() {
 
 #[tokio::test]
 async fn shares() {
-    let result = tests::opensubsonic_shares(&create_client()).await;
+    let client = create_client();
+    let song_id = opensubsonic::get_random_song_id(&client).await;
+
+    let result = tests::opensubsonic_shares(&client, &song_id).await;
     if let Err(SubsonicError::Failed(error)) = result {
         assert_eq!(error.code, SubsonicErrorCode::NotAuthorized);
     } else {
@@ -195,5 +202,7 @@ async fn shares() {
 async fn download() {
     let client = create_client();
     tests::download_intentional_error(&client).await;
-    tests::opensubsonic_download(&client).await;
+
+    let song_id = opensubsonic::get_random_song_id(&client).await;
+    tests::download(&client, &song_id).await;
 }

@@ -1,3 +1,4 @@
+use crate::tests::opensubsonic;
 use crate::{opensubsonic::models::StructuredLyricsKind, *};
 
 // Navidrome Demo (OpenSubsonic)
@@ -46,7 +47,10 @@ async fn search3() {
 
 #[tokio::test]
 async fn star_unstar_song() {
-    tests::star_unstar_song_opensubsonic(&create_client()).await;
+    let client = create_client();
+    let song_id = opensubsonic::get_random_song_id(&client).await;
+
+    tests::star_unstar_song_opensubsonic(&client, &song_id).await;
 }
 
 #[tokio::test]
@@ -162,12 +166,17 @@ async fn podcasts() {
 
 #[tokio::test]
 async fn shares() {
-    tests::opensubsonic_shares(&create_client()).await.unwrap();
+    let client = create_client();
+    let song_id = opensubsonic::get_random_song_id(&client).await;
+
+    tests::opensubsonic_shares(&client, &song_id).await.unwrap();
 }
 
 #[tokio::test]
 async fn download() {
     let client = create_client();
     tests::download_intentional_error(&client).await;
-    tests::opensubsonic_download(&client).await;
+
+    let song_id = opensubsonic::get_random_song_id(&client).await;
+    tests::download(&client, &song_id).await;
 }

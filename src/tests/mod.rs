@@ -6,6 +6,7 @@ use super::*;
 
 mod ampache;
 mod navidrome;
+mod opensubsonic;
 mod subsonic;
 
 pub struct SubsonicLogin<'a> {
@@ -42,10 +43,7 @@ async fn search3<T: SubsonicServerInfo>(client: &Client<T>, parameters: Search3P
     client.search3(parameters).await.unwrap()
 }
 
-async fn star_unstar_song_subsonic(client: &SubsonicClient) {
-    let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
-    let song_id = search3_response.song[0].id.as_ref();
-
+async fn star_unstar_song_subsonic(client: &SubsonicClient, song_id: &str) {
     // Unstar to return to it to a default state
     client.unstar(StarParameters::id(song_id)).await.unwrap();
 
@@ -60,10 +58,7 @@ async fn star_unstar_song_subsonic(client: &SubsonicClient) {
     assert!(song.starred.is_none(), "Song should be unstarred after Unstar method was called");
 }
 
-async fn star_unstar_song_opensubsonic(client: &OpenSubsonicClient) {
-    let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
-    let song_id = search3_response.song[0].id.as_ref();
-
+async fn star_unstar_song_opensubsonic(client: &OpenSubsonicClient, song_id: &str) {
     // Unstar to return to it to a default state
     client.unstar(StarParameters::id(song_id)).await.unwrap();
 
@@ -139,10 +134,7 @@ async fn change_password<T: SubsonicServerInfo>(client: &Client<T>, username: &s
     }
 }
 
-async fn bookmarks_subsonic(client: &SubsonicClient) {
-    let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
-    let song_id = search3_response.song[0].id.as_ref();
-    
+async fn bookmarks_subsonic(client: &SubsonicClient, song_id: &str) {
     // Check current bookmark status
     let bookmarks = client.get_bookmarks().await.unwrap();
     let is_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id.as_ref() == song_id).is_some();
@@ -154,10 +146,7 @@ async fn bookmarks_subsonic(client: &SubsonicClient) {
     }
 }
 
-async fn _bookmarks_opensubsonic(client: &OpenSubsonicClient) {
-    let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
-    let song_id = search3_response.song[0].id.as_ref();
-    
+async fn _bookmarks_opensubsonic(client: &OpenSubsonicClient, song_id: &str) {
     // Check current bookmark status
     let bookmarks = client.get_bookmarks().await.unwrap();
     let is_bookmarked = bookmarks.bookmark.into_iter().find(|item| item.entry.id.as_ref() == song_id).is_some();
@@ -267,12 +256,9 @@ async fn podcasts<T: SubsonicServerInfo>(client: &Client<T>) {
     client.get_podcasts(GetPodcastsParameters::include_episodes(false)).await.unwrap();
 }
 
-async fn subsonic_shares(client: &SubsonicClient) 
+async fn subsonic_shares(client: &SubsonicClient, song_id: &str) 
     -> Result<(), SubsonicError<<Subsonic as traits::SubsonicServerInfo>::ErrorData>> 
 {
-    let search3_response = client.search3(Search3Parameters::query("e")).await?;
-    let song_id = search3_response.song[0].id.as_ref();
-    
     // Create a Share
     let share = client.create_share(CreateShareParameters::one(song_id)).await?;
     let share_id = share.share[0].id.as_ref();
@@ -292,12 +278,9 @@ async fn subsonic_shares(client: &SubsonicClient)
     Ok(())
 }
 
-async fn opensubsonic_shares(client: &OpenSubsonicClient) 
+async fn opensubsonic_shares(client: &OpenSubsonicClient, song_id: &str) 
     -> Result<(), SubsonicError<<OpenSubsonic as traits::SubsonicServerInfo>::ErrorData>> 
 {
-    let search3_response = client.search3(Search3Parameters::query("")).await?;
-    let song_id = search3_response.song[0].id.as_ref();
-    
     // Create a Share
     let share = client.create_share(CreateShareParameters::one(song_id)).await?;
     assert!(!share.share.is_empty(), "{share:#?}");
@@ -335,18 +318,7 @@ async fn download_intentional_error<T: SubsonicServerInfo>(client: &Client<T>) -
     }
 }
 
-async fn subsonic_download(client: &SubsonicClient) {
-    let search3_response = client.search3(Search3Parameters::query("e")).await.unwrap();
-    let song_id = search3_response.song[0].id.as_ref();
-
-    let stream = client.download(song_id).await.unwrap();
-    assert_ne!(stream.count().await, 0, "Stream is empty");
-}
-
-async fn opensubsonic_download(client: &OpenSubsonicClient) {
-    let search3_response = client.search3(Search3Parameters::query("")).await.unwrap();
-    let song_id = search3_response.song[0].id.as_ref();
-
+async fn download<T: SubsonicServerInfo>(client: &Client<T>, song_id: &str) {
     let stream = client.download(song_id).await.unwrap();
     assert_ne!(stream.count().await, 0, "Stream is empty");
 }

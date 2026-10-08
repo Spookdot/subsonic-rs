@@ -12,6 +12,20 @@ fn create_client() -> SubsonicClient {
     SubsonicClient::new(SUBSONIC.url, parameters)
 }
 
+async fn get_song_list(client: &SubsonicClient) 
+    -> Vec<<crate::subsonic::Subsonic as SubsonicServerInfo>::Child> {
+    let response = client.search3(Search3Parameters::query("e")).await.unwrap();
+    response.song
+}
+
+async fn get_random_song_id(client: &SubsonicClient) -> Box<str> {
+    let songs = get_song_list(client).await;
+    assert!(!songs.is_empty(), "Server does not have any songs");
+
+    let random_number = rand::random_range(0..songs.len());
+    songs.into_iter().nth(random_number).unwrap().id
+}
+
 #[tokio::test]
 async fn ping() {
     tests::ping(&create_client()).await;
@@ -50,7 +64,10 @@ async fn search3() {
 
 #[tokio::test]
 async fn star_unstar_song() {
-    tests::star_unstar_song_subsonic(&create_client()).await;
+    let client = create_client();
+    let song_id = get_random_song_id(&client).await;
+
+    tests::star_unstar_song_subsonic(&client, &song_id).await;
 }
 
 #[tokio::test]
@@ -106,7 +123,10 @@ async fn change_password() {
 
 #[tokio::test]
 async fn bookmarks() {
-    tests::bookmarks_subsonic(&create_client()).await;
+    let client = create_client();
+    let song_id = get_random_song_id(&client).await;
+
+    tests::bookmarks_subsonic(&client, &song_id).await;
 }
 
 #[tokio::test]
@@ -139,7 +159,10 @@ async fn podcasts() {
 
 #[tokio::test]
 async fn shares() {
-    let result = tests::subsonic_shares(&create_client()).await;
+    let client = create_client();
+    let song_id = get_random_song_id(&client).await;
+
+    let result = tests::subsonic_shares(&client, &song_id).await;
     if let Err(SubsonicError::Failed(error)) = result {
         assert_eq!(error.code, SubsonicErrorCode::NotAuthorized);
     } else {
@@ -151,5 +174,7 @@ async fn shares() {
 async fn download() {
     let client = create_client();
     tests::download_intentional_error(&client).await;
-    tests::subsonic_download(&client).await;
+
+    let song_id = get_random_song_id(&client).await;
+    tests::download(&client, &song_id).await;
 }
