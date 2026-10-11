@@ -328,3 +328,8 @@ async fn download_podcast_episode<T: SubsonicServerInfo>(client: &Client<T>, pod
 {
     client.download_podcast_episode(podcast_id).await
 }
+
+// TODO add test for this
+/*
+async fn find_sonic_path<T: SubsonicServerInfo>(client: &Client<T>) {}
+*/

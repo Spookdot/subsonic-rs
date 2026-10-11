@@ -58,22 +58,22 @@ pub struct SubsonicBasicData {
 /// A Podcast episode.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::PodcastEpisode>(r#"
+/// # serde_json::from_str::<subsonic::subsonic::models::PodcastEpisode>(r#"
 /// {
 ///   "id": "7390",
 ///   "parent": "7389",
-///   "isDir": "false",
+///   "isDir": false,
 ///   "title": "Jonas Gahr Støre",
 ///   "album": "NRK – Hallo P3",
 ///   "artist": "Podcast",
-///   "year": "2015",
+///   "year": 2015,
 ///   "coverArt": "7389",
-///   "size": "41808585",
+///   "size": 41808585,
 ///   "contentType": "audio/mpeg",
 ///   "suffix": "mp3",
-///   "duration": "2619",
-///   "bitRate": "128",
-///   "isVideo": "false",
+///   "duration": 2619,
+///   "bitRate": 128,
+///   "isVideo": false,
 ///   "created": "2015-09-07T20:07:31.000Z",
 ///   "artistId": "453",
 ///   "type": "podcast",
@@ -105,7 +105,7 @@ pub struct PodcastEpisode {
 /// A Podcast channel.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::PodcastChannel>(r#"
+/// # serde_json::from_str::<subsonic::subsonic::models::PodcastChannel>(r#"
 /// {
 ///   "id": "1",
 ///   "url": "http://downloads.bbc.co.uk/podcasts/fivelive/drkarl/rss.xml",
@@ -124,15 +124,15 @@ pub struct PodcastEpisode {
 ///       "publishDate": "2011-02-03T14:46:43",
 ///       "status": "completed",
 ///       "parent": "11",
-///       "isDir": "false",
-///       "year": "2011",
+///       "isDir": false,
+///       "year": 2011,
 ///       "genre": "Podcast",
 ///       "coverArt": "24",
-///       "size": "78421341",
+///       "size": 78421341,
 ///       "contentType": "audio/mpeg",
 ///       "suffix": "mp3",
-///       "duration": "3146",
-///       "bitRate": "128",
+///       "duration": 3146,
+///       "bitRate": 128,
 ///       "path": "Podcast/drkarl/20110203.mp3"
 ///     }
 ///   ]
@@ -166,14 +166,14 @@ pub struct PodcastChannel {
 /// Podcasts.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::Podcasts>(r#"
+/// # serde_json::from_str::<subsonic::subsonic::models::Podcasts>(r#"
 /// {
 ///   "channel": [
 ///     {
 ///       "id": "7390",
 ///       "url": "https://example.com/404",
 ///       "parent": "7389",
-///       "isDir": "false",
+///       "isDir": false,
 ///       "title": "Jonas Gahr Støre",
 ///       "album": "NRK – Hallo P3",
 ///       "artist": "Podcast",
@@ -184,7 +184,7 @@ pub struct PodcastChannel {
 ///       "suffix": "mp3",
 ///       "duration": "2619",
 ///       "bitRate": "128",
-///       "isVideo": "false",
+///       "isVideo": false,
 ///       "created": "2015-09-07T20:07:31.000Z",
 ///       "artistId": "453",
 ///       "type": "podcast",

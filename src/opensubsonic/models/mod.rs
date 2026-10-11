@@ -94,25 +94,75 @@ pub struct OpenSubsonicExtension {
     pub versions: Vec<u32>,
 }
 
+/// A Child element with an additional normalized similarity field.
+///
+/// A `sonicMatch` is a wrapper object with:
+/// * `entry` as a Child object
+/// * `similarity` (normalized similarity value)
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::SonicMatch>(r#"
+/// {
+///   "entry": {
+///     "id": "300000060",
+///     "parent": "200000002",
+///     "title": "BrownSmoke",
+///     "isDir": false,
+///     "isVideo": false,
+///     "type": "music",
+///     "albumId": "200000002",
+///     "album": "Colorsmoke EP",
+///     "artistId": "100000002",
+///     "artist": "Synthetic",
+///     "coverArt": "300000060",
+///     "duration": 304,
+///     "bitRate": 20,
+///     "bitDepth": 16,
+///     "samplingRate": 44100,
+///     "channelCount": 2,
+///     "track": 4,
+///     "year": 2007,
+///     "genre": "Electronic",
+///     "size": 792375,
+///     "discNumber": 1,
+///     "suffix": "wma",
+///     "contentType": "audio/x-ms-wma",
+///     "path": "Synthetic/Synthetic_-_Colorsmoke_EP/04-Synthetic_-_BrownSmoke.wma"
+///   },
+///   "similarity": 1.0
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SonicMatch {
+    /// The child metadata object (id, parent, title, etc.).
+    pub entry: Child,
+    /// The normalized similarity score (1.0 = same exact song, 0.0 = most different).
+    /// For `getSonicSimilarTracks`, relative to the query song. 
+    /// For `findSonicPath`, relative to the starting song. 
+    /// Returns -1 when similarity is not supported by the server.
+    pub similarity: f32,
+}
+
 /// A Podcast episode.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::PodcastEpisode>(r#"
+/// # serde_json::from_str::<subsonic::opensubsonic::models::PodcastEpisode>(r#"
 /// {
 ///   "id": "7390",
 ///   "parent": "7389",
-///   "isDir": "false",
+///   "isDir": false,
 ///   "title": "Jonas Gahr Støre",
 ///   "album": "NRK – Hallo P3",
 ///   "artist": "Podcast",
-///   "year": "2015",
+///   "year": 2015,
 ///   "coverArt": "7389",
-///   "size": "41808585",
+///   "size": 41808585,
 ///   "contentType": "audio/mpeg",
 ///   "suffix": "mp3",
-///   "duration": "2619",
-///   "bitRate": "128",
-///   "isVideo": "false",
+///   "duration": 2619,
+///   "bitRate": 128,
+///   "isVideo": false,
 ///   "created": "2015-09-07T20:07:31.000Z",
 ///   "artistId": "453",
 ///   "type": "podcast",
@@ -144,7 +194,7 @@ pub struct PodcastEpisode {
 /// A Podcast channel.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::PodcastChannel>(r#"
+/// # serde_json::from_str::<subsonic::opensubsonic::models::PodcastChannel>(r#"
 /// {
 ///   "id": "1",
 ///   "url": "http://downloads.bbc.co.uk/podcasts/fivelive/drkarl/rss.xml",
@@ -163,15 +213,15 @@ pub struct PodcastEpisode {
 ///       "publishDate": "2011-02-03T14:46:43",
 ///       "status": "completed",
 ///       "parent": "11",
-///       "isDir": "false",
-///       "year": "2011",
+///       "isDir": false,
+///       "year": 2011,
 ///       "genre": "Podcast",
 ///       "coverArt": "24",
-///       "size": "78421341",
+///       "size": 78421341,
 ///       "contentType": "audio/mpeg",
 ///       "suffix": "mp3",
-///       "duration": "3146",
-///       "bitRate": "128",
+///       "duration": 3146,
+///       "bitRate": 128,
 ///       "path": "Podcast/drkarl/20110203.mp3"
 ///     }
 ///   ]
@@ -205,25 +255,25 @@ pub struct PodcastChannel {
 /// Podcasts.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::Podcasts>(r#"
+/// # serde_json::from_str::<subsonic::opensubsonic::models::Podcasts>(r#"
 /// {
 ///   "channel": [
 ///     {
 ///       "id": "7390",
 ///       "url": "https://example.com/404",
 ///       "parent": "7389",
-///       "isDir": "false",
+///       "isDir": false,
 ///       "title": "Jonas Gahr Støre",
 ///       "album": "NRK – Hallo P3",
 ///       "artist": "Podcast",
-///       "year": "2015",
+///       "year": 2015,
 ///       "coverArt": "7389",
-///       "size": "41808585",
+///       "size": 41808585,
 ///       "contentType": "audio/mpeg",
 ///       "suffix": "mp3",
-///       "duration": "2619",
-///       "bitRate": "128",
-///       "isVideo": "false",
+///       "duration": 2619,
+///       "bitRate": 128,
+///       "isVideo": false,
 ///       "created": "2015-09-07T20:07:31.000Z",
 ///       "artistId": "453",
 ///       "type": "podcast",
