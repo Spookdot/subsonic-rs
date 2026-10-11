@@ -206,3 +206,17 @@ async fn download() {
     let song_id = opensubsonic::get_random_song_id(&client).await;
     tests::download(&client, &song_id).await;
 }
+
+#[tokio::test]
+async fn download_podcast_episode() {
+    let client = create_client();
+    let podcasts = client.get_podcasts(GetPodcastsParameters::default()).await.unwrap();
+    let podcast_id = podcasts.channel[0].episode[0].child.id.as_ref();
+
+    let result = tests::download_podcast_episode(&client, podcast_id).await;
+    if let Err(SubsonicError::Failed(error)) = result {
+        assert_eq!(error.code, SubsonicErrorCode::NotAuthorized);
+    } else {
+        panic!();
+    }
+}

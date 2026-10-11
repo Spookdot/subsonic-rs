@@ -79,6 +79,13 @@ pub trait SubsonicServerInfo {
     /// See: [`subsonic::models::Shares`](crate::subsonic::models::Shares)
     /// and [`opensubsonic::models::Shares`](crate::opensubsonic::models::Shares)
     type Shares: Serialize + DeserializeOwned + Debug;
+    /// Type used to represent a collection of Podcasts
+    /// For example method [`Client::get_podcasts()`](crate::Client::get_podcasts())
+    ///
+    /// See: 
+    /// See: [`subsonic::models::Podcasts`](crate::subsonic::models::Podcasts)
+    /// and [`opensubsonic::models::Podcasts`](crate::opensubsonic::models::Podcasts)
+    type Podcasts: Serialize + DeserializeOwned + Debug;
 }
 
 // TODO rename Trait

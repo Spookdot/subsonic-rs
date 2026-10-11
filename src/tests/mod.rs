@@ -322,3 +322,9 @@ async fn download<T: SubsonicServerInfo>(client: &Client<T>, song_id: &str) {
     let stream = client.download(song_id).await.unwrap();
     assert_ne!(stream.count().await, 0, "Stream is empty");
 }
+
+async fn download_podcast_episode<T: SubsonicServerInfo>(client: &Client<T>, podcast_id: &str) 
+    -> Result<(), SubsonicError<T::ErrorData>>
+{
+    client.download_podcast_episode(podcast_id).await
+}
