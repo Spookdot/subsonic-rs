@@ -473,7 +473,9 @@ pub struct Share<TChild: Child> {
 /// Shares.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::opensubsonic::models::Shares>(r#"
+/// # use subsonic::models::Shares;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<Shares<Child>>(r#"
 /// {
 ///   "share": [
 ///     {
