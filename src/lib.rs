@@ -288,7 +288,7 @@ impl<T: SubsonicServerInfo> Client<T> {
     /// This method can also be used to return details for only one channel - refer to the `id` parameter.
     /// A typical use case for this method would be to first retrieve all channels without episodes,
     /// and then retrieve all episodes for the single channel the user selects.
-    pub async fn get_podcasts(&self, parameters: GetPodcastsParameters) -> Result<Podcasts, SubsonicError<T::ErrorData>> {
+    pub async fn get_podcasts(&self, parameters: GetPodcastsParameters) -> Result<Podcasts<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/getPodcasts.view", &parameters).await
     }
     /// Creates a public URL that can be used by anyone to stream music or video from the server.
@@ -308,5 +308,14 @@ impl<T: SubsonicServerInfo> Client<T> {
     ///   [`getShares`](Client<T>::get_shares()).
     pub async fn delete_share(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
         self.query("/rest/deleteShare.view", &[("id", id)]).await
+    }
+    /// Request the server to start downloading a given Podcast episode.
+    /// Note: The user must be authorized for Podcast administration
+    /// (see Settings > Users > User is allowed to administrate Podcasts).
+    ///
+    /// # Arguments
+    /// * `id` - The ID of the Podcast episode to download.
+    pub async fn download_podcast_episode(&self, id: &str) -> Result<(), SubsonicError<T::ErrorData>> {
+        self.query("/rest/downloadPodcastEpisode.view", &[("id", id)]).await
     }
 }

@@ -48,22 +48,24 @@ pub enum PodcastStatus {
 /// A Podcast episode.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::PodcastEpisode>(r#"
+/// # use subsonic::models::PodcastEpisode;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<PodcastEpisode<Child>>(r#"
 /// {
 ///   "id": "7390",
 ///   "parent": "7389",
-///   "isDir": "false",
+///   "isDir": false,
 ///   "title": "Jonas Gahr Støre",
 ///   "album": "NRK – Hallo P3",
 ///   "artist": "Podcast",
-///   "year": "2015",
+///   "year": 2015,
 ///   "coverArt": "7389",
-///   "size": "41808585",
+///   "size": 41808585,
 ///   "contentType": "audio/mpeg",
 ///   "suffix": "mp3",
-///   "duration": "2619",
-///   "bitRate": "128",
-///   "isVideo": "false",
+///   "duration": 2619,
+///   "bitRate": 128,
+///   "isVideo": false,
 ///   "created": "2015-09-07T20:07:31.000Z",
 ///   "artistId": "453",
 ///   "type": "podcast",
@@ -77,7 +79,7 @@ pub enum PodcastStatus {
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct PodcastEpisode {
+pub struct PodcastEpisode<TChild: Child> {
     /// ID used for streaming podcast
     pub stream_id: Option<Box<str>>,
     /// ID of the podcast channel
@@ -87,13 +89,17 @@ pub struct PodcastEpisode {
     /// Podcast status
     pub status: PodcastStatus,
     /// Date the episode was published [ISO 8601]
-    pub publish_date: Option<Box<str>>
+    pub publish_date: Option<Box<str>>,
+    #[serde(flatten)]
+    pub child: TChild,
 }
 
 /// A Podcast channel.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::PodcastChannel>(r#"
+/// # use subsonic::models::PodcastChannel;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<PodcastChannel<Child>>(r#"
 /// {
 ///   "id": "1",
 ///   "url": "http://downloads.bbc.co.uk/podcasts/fivelive/drkarl/rss.xml",
@@ -112,15 +118,15 @@ pub struct PodcastEpisode {
 ///       "publishDate": "2011-02-03T14:46:43",
 ///       "status": "completed",
 ///       "parent": "11",
-///       "isDir": "false",
-///       "year": "2011",
+///       "isDir": false,
+///       "year": 2011,
 ///       "genre": "Podcast",
 ///       "coverArt": "24",
-///       "size": "78421341",
+///       "size": 78421341,
 ///       "contentType": "audio/mpeg",
 ///       "suffix": "mp3",
-///       "duration": "3146",
-///       "bitRate": "128",
+///       "duration": 3146,
+///       "bitRate": 128,
 ///       "path": "Podcast/drkarl/20110203.mp3"
 ///     }
 ///   ]
@@ -129,7 +135,7 @@ pub struct PodcastEpisode {
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct PodcastChannel {
+pub struct PodcastChannel<TChild: Child> {
     /// The channel ID
     pub id: Box<str>,
     /// Podcast channel URL
@@ -147,14 +153,16 @@ pub struct PodcastChannel {
     /// An error message
     pub error_message: Option<Box<str>>,
     /// Podcast episodes with this channel
-    #[serde(default)]
-    pub episode: Vec<PodcastEpisode>,
+    #[serde(default = "Vec::new")]
+    pub episode: Vec<PodcastEpisode<TChild>>,
 }
 
 /// Podcasts.
 /// # Example
 /// ```
-/// # serde_json::from_str::<subsonic::models::Podcasts>(r#"
+/// # use subsonic::models::Podcasts;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<Podcasts<Child>>(r#"
 /// {
 ///   "channel": [
 ///     {
@@ -194,10 +202,10 @@ pub struct PodcastChannel {
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Podcasts {
+pub struct Podcasts<TChild: Child> {
     /// Podcast channel(s)
-    #[serde(default)]
-    pub channel: Vec<PodcastChannel>
+    #[serde(default = "Vec::new")]
+    pub channel: Vec<PodcastChannel<TChild>>
 }
 
 /// A chatMessage.

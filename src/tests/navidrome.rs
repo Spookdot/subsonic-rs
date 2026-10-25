@@ -180,3 +180,9 @@ async fn download() {
     let song_id = opensubsonic::get_random_song_id(&client).await;
     tests::download(&client, &song_id).await;
 }
+
+// Not supported by Navidrome
+/*
+#[tokio::test]
+async fn download_podcast_episode() {}
+*/

@@ -94,6 +94,56 @@ pub struct OpenSubsonicExtension {
     pub versions: Vec<u32>,
 }
 
+/// A Child element with an additional normalized similarity field.
+///
+/// A `sonicMatch` is a wrapper object with:
+/// * `entry` as a Child object
+/// * `similarity` (normalized similarity value)
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::opensubsonic::models::SonicMatch>(r#"
+/// {
+///   "entry": {
+///     "id": "300000060",
+///     "parent": "200000002",
+///     "title": "BrownSmoke",
+///     "isDir": false,
+///     "isVideo": false,
+///     "type": "music",
+///     "albumId": "200000002",
+///     "album": "Colorsmoke EP",
+///     "artistId": "100000002",
+///     "artist": "Synthetic",
+///     "coverArt": "300000060",
+///     "duration": 304,
+///     "bitRate": 20,
+///     "bitDepth": 16,
+///     "samplingRate": 44100,
+///     "channelCount": 2,
+///     "track": 4,
+///     "year": 2007,
+///     "genre": "Electronic",
+///     "size": 792375,
+///     "discNumber": 1,
+///     "suffix": "wma",
+///     "contentType": "audio/x-ms-wma",
+///     "path": "Synthetic/Synthetic_-_Colorsmoke_EP/04-Synthetic_-_BrownSmoke.wma"
+///   },
+///   "similarity": 1.0
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SonicMatch {
+    /// The child metadata object (id, parent, title, etc.).
+    pub entry: Child,
+    /// The normalized similarity score (1.0 = same exact song, 0.0 = most different).
+    /// For `getSonicSimilarTracks`, relative to the query song. 
+    /// For `findSonicPath`, relative to the starting song. 
+    /// Returns -1 when similarity is not supported by the server.
+    pub similarity: f32,
+}
+
 /// Playlist.
 /// # Example
 /// ```

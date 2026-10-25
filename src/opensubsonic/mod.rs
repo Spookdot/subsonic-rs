@@ -36,4 +36,16 @@ impl Client<OpenSubsonic> {
     pub async fn get_open_subsonic_extensions(&self) -> Result<Vec<OpenSubsonicExtension>, SubsonicError<ErrorData>> {
         self.query("/rest/getOpenSubsonicExtensions.view", &()).await
     }
+    pub async fn find_sonic_path(&self, start_song_id: &str, end_song_id: &str, count: Option<u32>) 
+        -> Result<Vec<SonicMatch>, SubsonicError<ErrorData>> 
+    {
+        let count = count.unwrap_or(25);
+        let count_str = format!("{count}");
+        let parameters = &[
+            ("startSongId", start_song_id),
+            ("endSongId", end_song_id),
+            ("count", count_str.as_str())
+        ];
+        self.query("/rest/findSonicPath.view", &parameters).await
+    }
 }
