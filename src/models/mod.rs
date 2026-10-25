@@ -1,5 +1,8 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+
+use crate::traits::{Child, InternetRadioStation, Playlist};
 
 #[derive(Deserialize_repr, Serialize_repr, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
@@ -373,3 +376,692 @@ pub struct License {
     pub trial_expires: Box<str>,
 }
 
+/// Share.
+/// # Example
+/// ```
+/// # use subsonic::models::Share;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<Share<Child>>(r#"
+/// {
+///   "id": "12",
+///   "url": "http://localhost:8989/share.php?id=12&secret=fXlKyEv3",
+///   "description": "Forget and Remember (Comfort Fit)",
+///   "username": "user",
+///   "created": "2023-03-16T04:13:09+00:00",
+///   "visitCount": 0,
+///   "entry": [
+///     {
+///       "id": "300000116",
+///       "parent": "200000021",
+///       "title": "Can I Help U?",
+///       "isDir": false,
+///       "isVideo": false,
+///       "type": "music",
+///       "albumId": "200000021",
+///       "album": "Forget and Remember",
+///       "artistId": "100000036",
+///       "artist": "Comfort Fit",
+///       "coverArt": "300000116",
+///       "duration": 103,
+///       "bitRate": 216,
+///       "bitDepth": 16,
+///       "samplingRate": 44100,
+///       "channelCount": 2,
+///       "track": 1,
+///       "year": 2005,
+///       "genre": "Hip-Hop",
+///       "size": 2811819,
+///       "discNumber": 1,
+///       "suffix": "mp3",
+///       "contentType": "audio/mpeg",
+///       "path": "user/Comfort Fit/Forget And Remember/1 - Can I Help U?.mp3"
+///     },
+///     {
+///       "id": "300000121",
+///       "parent": "200000021",
+///       "title": "Planetary Picknick",
+///       "isDir": false,
+///       "isVideo": false,
+///       "type": "music",
+///       "albumId": "200000021",
+///       "album": "Forget and Remember",
+///       "artistId": "100000036",
+///       "artist": "Comfort Fit",
+///       "coverArt": "300000121",
+///       "duration": 358,
+///       "bitRate": 238,
+///       "bitDepth": 16,
+///       "samplingRate": 44100,
+///       "channelCount": 2,
+///       "track": 2,
+///       "year": 2005,
+///       "genre": "Hip-Hop",
+///       "size": 10715592,
+///       "discNumber": 1,
+///       "suffix": "mp3",
+///       "contentType": "audio/mpeg",
+///       "path": "user/Comfort Fit/Forget And Remember/2 - Planetary Picknick.mp3"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Share<TChild: Child> {
+    /// The share id
+    pub id: Box<str>,
+    /// The share url
+    pub url: Box<str>,
+    /// A description
+    pub description: Option<Box<str>>,
+    /// The username
+    pub username: Box<str>,
+    /// Creation date \[ISO 8601\]
+    pub created: Box<str>,
+    /// Share expiration \[ISO 8601\]
+    pub expires: Option<Box<str>>,
+    /// Last visit \[ISO 8601\]
+    pub last_visited: Option<Box<str>>,
+    /// Visit count
+    pub visit_count: u32,
+    /// A list of share
+    #[serde(default = "Vec::new")]
+    pub entry: Vec<TChild>,
+}
+
+/// Shares.
+/// # Example
+/// ```
+/// # use subsonic::models::Shares;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<Shares<Child>>(r#"
+/// {
+///   "share": [
+///     {
+///       "id": "12",
+///       "url": "http://localhost:8989/share.php?id=12&secret=fXlKyEv3",
+///       "description": "Forget and Remember (Comfort Fit)",
+///       "username": "user",
+///       "created": "2023-03-16T04:13:09+00:00",
+///       "visitCount": 0,
+///       "entry": [
+///         {
+///           "id": "300000116",
+///           "parent": "200000021",
+///           "title": "Can I Help U?",
+///           "isDir": false,
+///           "isVideo": false,
+///           "type": "music",
+///           "albumId": "200000021",
+///           "album": "Forget and Remember",
+///           "artistId": "100000036",
+///           "artist": "Comfort Fit",
+///           "coverArt": "300000116",
+///           "duration": 103,
+///           "bitRate": 216,
+///           "bitDepth": 16,
+///           "samplingRate": 44100,
+///           "channelCount": 2,
+///           "track": 1,
+///           "year": 2005,
+///           "genre": "Hip-Hop",
+///           "size": 2811819,
+///           "discNumber": 1,
+///           "suffix": "mp3",
+///           "contentType": "audio/mpeg",
+///           "path": "user/Comfort Fit/Forget And Remember/1 - Can I Help U?.mp3"
+///         },
+///         {
+///           "id": "300000121",
+///           "parent": "200000021",
+///           "title": "Planetary Picknick",
+///           "isDir": false,
+///           "isVideo": false,
+///           "type": "music",
+///           "albumId": "200000021",
+///           "album": "Forget and Remember",
+///           "artistId": "100000036",
+///           "artist": "Comfort Fit",
+///           "coverArt": "300000121",
+///           "duration": 358,
+///           "bitRate": 238,
+///           "bitDepth": 16,
+///           "samplingRate": 44100,
+///           "channelCount": 2,
+///           "track": 2,
+///           "year": 2005,
+///           "genre": "Hip-Hop",
+///           "size": 10715592,
+///           "discNumber": 1,
+///           "suffix": "mp3",
+///           "contentType": "audio/mpeg",
+///           "path": "user/Comfort Fit/Forget And Remember/2 - Planetary Picknick.mp3"
+///         }
+///       ]
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Shares<TChild: Child> {
+    /// A list of share
+    #[serde(default = "Vec::new")]
+    pub share: Vec<Share<TChild>>
+}
+
+/// Playlist.
+/// # Example
+/// ```
+/// # use subsonic::models::Playlists;
+/// # use subsonic::opensubsonic::models::Playlist;
+/// # serde_json::from_str::<Playlists<Playlist>>(r#"
+/// {
+///   "playlist": [
+///     {
+///       "id": "800000003",
+///       "name": "random - admin - private (admin)",
+///       "owner": "admin",
+///       "public": false,
+///       "created": "2021-02-23T04:35:38+00:00",
+///       "changed": "2021-02-23T04:35:38+00:00",
+///       "songCount": 43,
+///       "duration": 17875
+///     },
+///     {
+///       "id": "800000002",
+///       "name": "random - admin - public (admin)",
+///       "owner": "admin",
+///       "public": true,
+///       "created": "2021-02-23T04:34:56+00:00",
+///       "changed": "2021-02-23T04:34:56+00:00",
+///       "songCount": 43,
+///       "duration": 17786
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Playlists<TPlaylist: Playlist> {
+    #[serde(default = "Vec::new")]
+    pub playlist: Vec<TPlaylist>
+}
+
+/// internetRadioStations.
+/// # Example
+/// ```
+/// # use subsonic::models::InternetRadioStations;
+/// # use subsonic::opensubsonic::models::InternetRadioStation;
+/// # serde_json::from_str::<InternetRadioStations<InternetRadioStation>>(r#"
+/// {
+///   "internetRadioStation": [
+///     {
+///       "id": "1",
+///       "name": "HBR1.com - Dream Factory",
+///       "streamUrl": "http://ubuntu.hbr1.com:19800/ambient.aac",
+///       "homePageUrl": "http://www.hbr1.com/"
+///     },
+///     {
+///       "id": "2",
+///       "name": "HBR1.com - I.D.M. Tranceponder",
+///       "streamUrl": "http://ubuntu.hbr1.com:19800/trance.ogg",
+///       "homePageUrl": "http://www.hbr1.com/"
+///     },
+///     {
+///       "id": "3",
+///       "name": "4ZZZ Community Radio",
+///       "streamUrl": "https://stream.4zzz.org.au:9200/4zzz",
+///       "homePageUrl": "https://4zzzfm.org.au"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct InternetRadioStations<TInternetRadioStation: InternetRadioStation> {
+    /// A list of internetRadioStation
+    #[serde(default = "Vec::new")]
+    pub internet_radio_station: Vec<TInternetRadioStation>,
+}
+
+/// A bookmark.
+/// # Example
+/// ```
+/// # use subsonic::models::Bookmark;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<Bookmark<Child>>(r#"
+/// {
+///   "entry": {
+///     "id": "113bf5989ad15ce2cf1834ba9622983f",
+///     "parent": "b87a936c682c49d4494c7ccb08c22d23",
+///     "isDir": false,
+///     "title": "Stay Out Here",
+///     "album": "Shaking The Habitual",
+///     "artist": "The Knife",
+///     "track": 11,
+///     "year": 2013,
+///     "genre": "Electronic",
+///     "coverArt": "al-b87a936c682c49d4494c7ccb08c22d23_0",
+///     "size": 21096309,
+///     "contentType": "audio/mp4",
+///     "suffix": "m4a",
+///     "duration": 642,
+///     "bitRate": 257,
+///     "bitDepth": 16,
+///     "samplingRate": 44100,
+///     "channelCount": 2,
+///     "path": "The Knife/Shaking The Habitual/11 - Stay Out Here.m4a",
+///     "created": "2023-03-13T16:30:35Z",
+///     "albumId": "b87a936c682c49d4494c7ccb08c22d23",
+///     "artistId": "b29e9a9d780cb0e133f3add5662771b9",
+///     "type": "music",
+///     "isVideo": false,
+///     "bookmarkPosition": 129000
+///   },
+///   "position": 129000,
+///   "username": "demo",
+///   "comment": "",
+///   "created": "2023-03-13T16:30:35Z",
+///   "changed": "2023-03-13T16:30:35Z"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Bookmark<TChild: Child> {
+    /// Bookmark position in milliseconds
+    pub position: u64,
+    /// Username
+    pub username: Box<str>,
+    /// Bookmark comment
+    pub comment: Option<Box<str>>,
+    /// Bookmark creation date \[ISO 8601\]
+    pub created: Box<str>,
+    /// Bookmark last updated date \[ISO 8601\]
+    pub changed: Box<str>,
+    /// The bookmark file
+    pub entry: TChild
+}
+
+/// Bookmarks list.
+/// # Example
+/// ```
+/// # use subsonic::models::Bookmarks;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<Bookmarks<Child>>(r#"
+/// {
+///   "bookmark": [
+///     {
+///       "entry": {
+///         "id": "113bf5989ad15ce2cf1834ba9622983f",
+///         "parent": "b87a936c682c49d4494c7ccb08c22d23",
+///         "isDir": false,
+///         "title": "Stay Out Here",
+///         "album": "Shaking The Habitual",
+///         "artist": "The Knife",
+///         "track": 11,
+///         "year": 2013,
+///         "genre": "Electronic",
+///         "coverArt": "al-b87a936c682c49d4494c7ccb08c22d23_0",
+///         "size": 21096309,
+///         "contentType": "audio/mp4",
+///         "suffix": "m4a",
+///         "duration": 642,
+///         "bitRate": 257,
+///         "bitDepth": 16,
+///         "samplingRate": 44100,
+///         "channelCount": 2,
+///         "path": "The Knife/Shaking The Habitual/11 - Stay Out Here.m4a",
+///         "created": "2023-03-13T16:30:35Z",
+///         "albumId": "b87a936c682c49d4494c7ccb08c22d23",
+///         "artistId": "b29e9a9d780cb0e133f3add5662771b9",
+///         "type": "music",
+///         "isVideo": false,
+///         "bookmarkPosition": 129000
+///       },
+///       "position": 129000,
+///       "username": "demo",
+///       "comment": "",
+///       "created": "2023-03-13T16:30:35Z",
+///       "changed": "2023-03-13T16:30:35Z"
+///     },
+///     {
+///       "entry": {
+///         "id": "2b42782333450d02b177823e729664af",
+///         "parent": "dc8d8889a6fe08d8da7698c7ee1de61c",
+///         "isDir": false,
+///         "title": "Ill with the Skills",
+///         "album": "First Words",
+///         "artist": "The Polish Ambassador",
+///         "track": 17,
+///         "year": 2014,
+///         "coverArt": "mf-2b42782333450d02b177823e729664af_641edeb3",
+///         "size": 6219581,
+///         "contentType": "audio/mpeg",
+///         "suffix": "mp3",
+///         "duration": 255,
+///         "bitRate": 194,
+///         "bitDepth": 16,
+///         "samplingRate": 44100,
+///         "channelCount": 2,
+///         "path": "The Polish Ambassador/First Words/17 - Ill with the Skills.mp3",
+///         "playCount": 1,
+///         "played": "2023-03-15T15:23:37Z",
+///         "created": "2023-03-25T11:44:51Z",
+///         "albumId": "dc8d8889a6fe08d8da7698c7ee1de61c",
+///         "artistId": "64e1f796b283545d329cdf6a31a31dbe",
+///         "type": "music",
+///         "isVideo": false,
+///         "bookmarkPosition": 7000
+///       },
+///       "position": 7000,
+///       "username": "demo",
+///       "comment": "playSub bookmark",
+///       "created": "2023-03-25T11:44:51Z",
+///       "changed": "2023-03-25T11:44:51Z"
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Bookmarks<TChild: Child> {
+    /// List of bookmark
+    #[serde(default = "Vec::new")]
+    pub bookmark: Vec<Bookmark<TChild>>,
+}
+
+/// searchResult
+/// # Example
+/// ```
+/// # use subsonic::models::SearchResult;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<SearchResult<Child>>(r#"
+/// {
+///     "offset" : 0,
+///     "totalHits" : 41,
+///     "match" : [ 
+///         {
+///             "id" : "302",
+///             "parent" : "278",
+///             "isDir" : false,
+///             "title" : "PeerGynT - Old Tales",
+///             "album" : "Broken Dreams",
+///             "artist" : "PeerGynt Lobogris",
+///             "track" : 10,
+///             "year" : 2007,
+///             "genre" : "Blues",
+///             "coverArt" : "278",
+///             "size" : 3846272,
+///             "contentType" : "audio/mpeg",
+///             "suffix" : "mp3",
+///             "duration" : 237,
+///             "bitRate" : 128,
+///             "path" : "PeerGynt Lobogris/Broken Dreams/10 - 10 PeerGynT - Old Tales.mp3",
+///             "playCount" : 943,
+///             "created" : "2017-03-12T11:06:34.000Z",
+///             "albumId" : "32",
+///             "artistId" : "16",
+///             "type" : "music"
+///         } 
+///     ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchResult<TChild: Child> {
+    pub offset: u32,
+    pub total_hits: u32,
+    #[serde(default = "Vec::new", rename = "match")]
+    pub match_: Vec<TChild>,
+}
+
+/// searchResult2
+/// # Example
+/// ```
+/// # use subsonic::models::SearchResult2;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<SearchResult2<Child>>(r#"
+/// {
+///   "artist": [
+///     {
+///       "id": "100000002",
+///       "name": "Synthetic",
+///       "coverArt": "ar-100000002",
+///       "starred": "2021-02-22T05:54:18Z"
+///     }
+///   ],
+///   "album": [
+///     {
+///       "id": "200000021",
+///       "parent": "100000036",
+///       "album": "Forget and Remember",
+///       "title": "Forget and Remember",
+///       "name": "Forget and Remember",
+///       "isDir": true,
+///       "coverArt": "al-200000021",
+///       "songCount": 20,
+///       "created": "2021-07-22T02:09:31+00:00",
+///       "duration": 4248,
+///       "playCount": 0,
+///       "artistId": "100000036",
+///       "artist": "Comfort Fit",
+///       "year": 2005,
+///       "genre": "Hip-Hop"
+///     }
+///   ],
+///   "song": [
+///     {
+///       "id": "082f435a363c32c57d5edb6a678a28d4",
+///       "parent": "e8a0685e3f3ec6f251649af2b58b8617",
+///       "isDir": false,
+///       "title": "\"polar expedition\"",
+///       "album": "Live at The Casbah - 2005-04-29",
+///       "artist": "The New Deal",
+///       "track": 4,
+///       "year": 2005,
+///       "coverArt": "mf-082f435a363c32c57d5edb6a678a28d4_6410b3ce",
+///       "size": 19866778,
+///       "contentType": "audio/flac",
+///       "suffix": "flac",
+///       "starred": "2023-03-27T09:45:27Z",
+///       "duration": 178,
+///       "bitRate": 880,
+///       "bitDepth": 16,
+///       "samplingRate": 44100,
+///       "channelCount": 2,
+///       "path": "The New Deal/Live at The Casbah - 2005-04-29/04 - \"polar expedition\".flac",
+///       "playCount": 8,
+///       "discNumber": 1,
+///       "created": "2023-03-14T17:51:22.112827504Z",
+///       "albumId": "e8a0685e3f3ec6f251649af2b58b8617",
+///       "artistId": "97e0398acf63f9fb930d7d4ce209a52b",
+///       "type": "music",
+///       "isVideo": false
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SearchResult2<TChild: Child> {
+    /// Starred artists
+    #[serde(default)]
+    pub artist: Vec<Artist>,
+    /// Starred albums
+    #[serde(default = "Vec::new")]
+    pub album: Vec<TChild>,
+    /// Starred songs
+    #[serde(default = "Vec::new")]
+    pub song: Vec<TChild>,
+}
+
+/// search3 Result.
+/// # Example
+/// ```
+/// # use subsonic::models::SearchResult3;
+/// # use subsonic::opensubsonic::models::Child;
+/// # serde_json::from_str::<SearchResult3<Child>>(r#"
+/// {
+///   "artist": [
+///     {
+///       "id": "37ec820ca7193e17040c98f7da7c4b51",
+///       "name": "2 Mello",
+///       "coverArt": "ar-37ec820ca7193e17040c98f7da7c4b51_0",
+///       "albumCount": 1,
+///       "userRating": 5,
+///       "artistImageUrl": "https://demo.org/image.jpg"
+///     }
+///   ],
+///   "album": [
+///     {
+///       "id": "ad0f112b6dcf83de5e9cae85d07f0d35",
+///       "name": "8-bit lagerfeuer",
+///       "artist": "pornophonique",
+///       "year": 2007,
+///       "coverArt": "al-ad0f112b6dcf83de5e9cae85d07f0d35_640a93a8",
+///       "starred": "2023-03-22T01:51:06Z",
+///       "duration": 1954,
+///       "playCount": 97,
+///       "created": "2023-03-10T02:19:35.784818075Z",
+///       "artistId": "91c3901ac465b9efc439e4be4270c2b6",
+///       "songCount": 8
+///     }
+///   ],
+///   "song": [
+///     {
+///       "id": "082f435a363c32c57d5edb6a678a28d4",
+///       "parent": "e8a0685e3f3ec6f251649af2b58b8617",
+///       "isDir": false,
+///       "title": "\"polar expedition\"",
+///       "album": "Live at The Casbah - 2005-04-29",
+///       "artist": "The New Deal",
+///       "track": 4,
+///       "year": 2005,
+///       "coverArt": "mf-082f435a363c32c57d5edb6a678a28d4_6410b3ce",
+///       "size": 19866778,
+///       "contentType": "audio/flac",
+///       "suffix": "flac",
+///       "starred": "2023-03-27T09:45:27Z",
+///       "duration": 178,
+///       "bitRate": 880,
+///       "bitDepth": 16,
+///       "samplingRate": 44100,
+///       "channelCount": 2,
+///       "path": "The New Deal/Live at The Casbah - 2005-04-29/04 - \"polar expedition\".flac",
+///       "playCount": 8,
+///       "played": "2023-03-26T22:27:46Z",
+///       "discNumber": 1,
+///       "created": "2023-03-14T17:51:22.112827504Z",
+///       "albumId": "e8a0685e3f3ec6f251649af2b58b8617",
+///       "artistId": "97e0398acf63f9fb930d7d4ce209a52b",
+///       "type": "music",
+///       "isVideo": false
+///     }
+///   ]
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SearchResult3<TChild: Child> {
+    /// Matching artists
+    #[serde(default)]
+    pub artist: Vec<ArtistID3>,
+    /// Matching albums
+    #[serde(default)]
+    pub album: Vec<AlbumID3>,
+    /// Matching songs
+    #[serde(default = "Vec::new")]
+    pub song: Vec<TChild>,
+}
+
+/// An artist from ID3 tags.
+/// # Example
+/// ```
+/// # serde_json::from_str::<subsonic::models::ArtistID3>(r#"
+/// {
+///   "id": "37ec820ca7193e17040c98f7da7c4b51",
+///   "name": "2 Mello",
+///   "coverArt": "ar-37ec820ca7193e17040c98f7da7c4b51_0",
+///   "albumCount": 1,
+///   "userRating": 5,
+///   "artistImageUrl": "https://demo.org/image.jpg",
+///   "starred": "2017-04-11T10:42:50.842Z"
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistID3 {
+    /// The id of the artist.
+    pub id: Box<str>,
+    /// The artist name.
+    pub name: Box<str>,
+    /// A coverArt id.
+    pub cover_art: Option<Box<str>>,
+    /// An url to an external image source.
+    pub artist_image_url: Option<Box<str>>,
+    /// Artist album count.
+    pub album_count: Option<u8>,
+    /// Date the artist was starred. \[ISO 8601\]
+    pub starred: Option<DateTime<Utc>>,
+}
+
+/// An album from ID3 tags.
+/// # Example
+/// ```
+/// # use subsonic::models::AlbumID3;
+/// # serde_json::from_str::<AlbumID3>(r#"
+/// {
+///   "id": "ad0f112b6dcf83de5e9cae85d07f0d35",
+///   "name": "8-bit lagerfeuer",
+///   "artist": "pornophonique",
+///   "year": 2007,
+///   "coverArt": "al-ad0f112b6dcf83de5e9cae85d07f0d35_640a93a8",
+///   "starred": "2023-03-22T01:51:06Z",
+///   "duration": 1954,
+///   "playCount": 97,
+///   "genre": "Hip-Hop",
+///   "created": "2023-03-10T02:19:35.784818075Z",
+///   "artistId": "91c3901ac465b9efc439e4be4270c2b6",
+///   "songCount": 8
+/// }
+/// # "#).unwrap();
+/// ```
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AlbumID3 {
+    /// The id of the album
+    pub id: Box<str>,
+    /// The album name.
+    pub name: Box<str>,
+    // OpenSubSonic Feature
+    /// The album version name (Remastered, Anniversary Box Set, ...).
+    pub version: Option<Box<str>>,
+    /// Artist name.
+    pub artist: Option<Box<str>>,
+    /// The id of the artist
+    pub artist_id: Option<Box<str>>,
+    /// A coverArt id.
+    pub cover_art: Option<Box<str>>,
+    /// Number of songs
+    pub song_count: u16,
+    /// Total duration of the album in seconds
+    pub duration: u16,
+    /// Number of play of the album
+    pub play_count: Option<u32>,
+    /// Date the album was added. \[ISO 8601\]
+    pub created: DateTime<Utc>,
+    /// Date the album was starred. \[ISO 8601\]
+    pub starred: Option<DateTime<Utc>>,
+    /// The album year
+    pub year: Option<u16>,
+    /// The album genre
+    pub genre: Option<Box<str>>,
+}

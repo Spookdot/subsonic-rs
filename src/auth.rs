@@ -15,7 +15,7 @@ pub(crate) fn hash_password(password: &str) -> (String, String) {
 }
 
 /// Struct containing parameters added to every request to the API
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct SubsonicParameters<T: SubsonicAuthenticationTrait> {
     #[serde(rename = "v")]
     version: Box<str>,

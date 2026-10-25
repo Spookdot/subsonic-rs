@@ -77,6 +77,7 @@ pub enum SubsonicError<T: ErrorDataTrait> {
 }
 
 /// A Client for the Subsonic API and OpenSubsonic
+#[derive(Clone)]
 pub struct Client<T: SubsonicServerInfo> {
     client: reqwest::Client,
     url: String,
@@ -162,13 +163,13 @@ impl<T: SubsonicServerInfo> Client<T> {
     }
     /// DEPRECATED endpoint included for compatibility reasons. 
     /// Please consider using [`Client::search2()`] or [`Client::search3()`] instead
-    pub async fn search(&self, parameters: SearchParameters) -> Result<T::SearchResult, SubsonicError<T::ErrorData>> {
+    pub async fn search(&self, parameters: SearchParameters) -> Result<SearchResult<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/search.view", &parameters).await
     }
-    pub async fn search2(&self, parameters: Search3Parameters) -> Result<T::SearchResult2, SubsonicError<T::ErrorData>> {
+    pub async fn search2(&self, parameters: Search3Parameters) -> Result<SearchResult2<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/search2.view", &parameters).await
     }
-    pub async fn search3(&self, parameters: Search3Parameters) -> Result<T::SearchResult3, SubsonicError<T::ErrorData>> {
+    pub async fn search3(&self, parameters: Search3Parameters) -> Result<SearchResult3<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/search3.view", &parameters).await
     }
     pub async fn star(&self, parameters: StarParameters) -> Result<(), SubsonicError<T::ErrorData>> {
@@ -217,7 +218,7 @@ impl<T: SubsonicServerInfo> Client<T> {
         self.query("/rest/createBookmark.view", &parameters).await
     }
     /// Returns all bookmarks for this user. A bookmark is a position within a certain media file.
-    pub async fn get_bookmarks(&self) -> Result<T::Bookmarks, SubsonicError<T::ErrorData>> {
+    pub async fn get_bookmarks(&self) -> Result<Bookmarks<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/getBookmarks.view", &()).await
     }
     /// Creates or updates a bookmark (a position within a media file). Bookmarks are personal and not visible to other users.
@@ -232,7 +233,7 @@ impl<T: SubsonicServerInfo> Client<T> {
         self.query("/rest/createInternetRadioStation.view", &parameters).await
     }
     /// Returns all internet radio stations. Takes no extra parameters.
-    pub async fn get_internet_radio_stations(&self) -> Result<T::InternetRadioStations, SubsonicError<T::ErrorData>> {
+    pub async fn get_internet_radio_stations(&self) -> Result<InternetRadioStations<T::InternetRadioStation>, SubsonicError<T::ErrorData>> {
         self.query("/rest/getInternetRadioStations.view", &()).await
     }
     /// Deletes an existing internet radio station. Only users with admin privileges are allowed to call this method.
@@ -258,7 +259,7 @@ impl<T: SubsonicServerInfo> Client<T> {
     /// # Arguments
     /// * `username` - (Since 1.8.0) If specified, return playlists for this user rather than for the authenticated user. 
     ///   The authenticated user must have admin role if this parameter is used.
-    pub async fn get_playlists(&self, username: Option<&str>) -> Result<T::Playlists, SubsonicError<T::ErrorData>> {
+    pub async fn get_playlists(&self, username: Option<&str>) -> Result<Playlists<T::Playlist>, SubsonicError<T::ErrorData>> {
         self.query("/rest/getPlaylists.view", &[("username", username)]).await
     }
     /// Deletes a saved playlist.
@@ -293,11 +294,11 @@ impl<T: SubsonicServerInfo> Client<T> {
     /// Creates a public URL that can be used by anyone to stream music or video from the server.
     /// The URL is short and suitable for posting on Facebook, Twitter etc.
     /// Note: The user must be authorized to share (see Settings > Users > User is allowed to share files with anyone).
-    pub async fn create_share(&self, parameters: CreateShareParameters) -> Result<T::Shares, SubsonicError<T::ErrorData>> {
+    pub async fn create_share(&self, parameters: CreateShareParameters) -> Result<Shares<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/createShare.view", &parameters.into_serializable()).await
     }
     /// Returns information about shared media this user is allowed to manage. Takes no extra parameters.
-    pub async fn get_shares(&self) -> Result<T::Shares, SubsonicError<T::ErrorData>> {
+    pub async fn get_shares(&self) -> Result<Shares<T::Child>, SubsonicError<T::ErrorData>> {
         self.query("/rest/getShares.view", &()).await
     }
     /// Deletes an existing share.
