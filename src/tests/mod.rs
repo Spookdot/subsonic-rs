@@ -31,15 +31,15 @@ async fn get_license<T: SubsonicServerInfo>(client: &Client<T>) {
     assert!(license.valid, "{:#?}", license);
 }
 
-async fn search<T: SubsonicServerInfo>(client: &Client<T>, parameters: SearchParameters) -> T::SearchResult {
+async fn search<T: SubsonicServerInfo>(client: &Client<T>, parameters: SearchParameters) -> SearchResult<T::Child> {
     client.search(parameters).await.unwrap()
 }
 
-async fn search2<T: SubsonicServerInfo>(client: &Client<T>, parameters: Search3Parameters) -> T::SearchResult2 {
+async fn search2<T: SubsonicServerInfo>(client: &Client<T>, parameters: Search3Parameters) -> SearchResult2<T::Child> {
     client.search2(parameters).await.unwrap()
 }
 
-async fn search3<T: SubsonicServerInfo>(client: &Client<T>, parameters: Search3Parameters) -> T::SearchResult3 {
+async fn search3<T: SubsonicServerInfo>(client: &Client<T>, parameters: Search3Parameters) -> SearchResult3<T::Child> {
     client.search3(parameters).await.unwrap()
 }
 
@@ -177,7 +177,7 @@ async fn delete_internet_radio_stations<T: SubsonicServerInfo>(client: &Client<T
     }
 }
 
-async fn get_internet_radio_stations<T: SubsonicServerInfo>(client: &Client<T>) -> T::InternetRadioStations {
+async fn get_internet_radio_stations<T: SubsonicServerInfo>(client: &Client<T>) -> InternetRadioStations<T::InternetRadioStation> {
     client.get_internet_radio_stations().await.unwrap()
 }
 

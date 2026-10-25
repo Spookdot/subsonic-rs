@@ -2,7 +2,7 @@ use crate::traits::SubsonicAuthenticationTrait;
 use crate::auth::{hash_password, SubsonicParameters};
 use serde::Serialize;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum OpenSubsonicAuthentication {
     LegacyPassword {

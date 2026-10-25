@@ -4,12 +4,13 @@ pub mod auth;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::{Client, SubsonicError};
-use crate::traits::*;
+use crate::traits::SubsonicServerInfo;
 use models::*;
 use auth::*;
 
 /// Struct using the [`SubsonicServerInfo`] Trait to contain information specific to the OpenSubsonic
 /// API
+#[derive(Clone)]
 pub struct OpenSubsonic;
 
 impl SubsonicServerInfo for OpenSubsonic {
@@ -17,15 +18,10 @@ impl SubsonicServerInfo for OpenSubsonic {
     type BasicResponse = OpenSubsonicBasicResponse;
     type SubsonicResponse<T: DeserializeOwned + Serialize + std::fmt::Debug> = OpenSubsonicResponse<T>;
     type ErrorData = ErrorData;
-    type SearchResult3 = SearchResult3;
-    type SearchResult2 = SearchResult2;
-    type SearchResult = SearchResult;
     type Child = Child;
-    type Bookmarks = Bookmarks;
-    type InternetRadioStations = InternetRadioStations;
     type PlaylistWithSongs = PlaylistWithSongs;
-    type Playlists = Playlists;
-    type Shares = Shares;
+    type InternetRadioStation = InternetRadioStation;
+    type Playlist = Playlist;
 }
 
 impl Client<OpenSubsonic> {

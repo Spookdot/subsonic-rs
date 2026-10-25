@@ -3,7 +3,7 @@ mod response;
 pub use response::*;
 
 use crate::models::{Artist, SubsonicErrorCode};
-use crate::traits::ErrorDataTrait;
+use crate::traits::{self, ErrorDataTrait};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
@@ -307,6 +307,8 @@ pub struct Playlist {
     pub allowed_user: Vec<Box<str>>,
 }
 
+impl traits::Playlist for Playlist {}
+
 /// Playlist with songs.
 /// # Example
 /// ```
@@ -384,6 +386,8 @@ pub struct PlaylistWithSongs {
     pub entry: Vec<Child>,
 }
 
+impl traits::PlaylistWithSongs for PlaylistWithSongs {}
+
 /// An internetRadioStation.
 /// # Example
 /// ```
@@ -408,6 +412,8 @@ pub struct InternetRadioStation {
     /// The home page URL for the station.
     pub home_page_url: Option<Box<str>>,
 }
+
+impl traits::InternetRadioStation for InternetRadioStation {}
 
 /// internetRadioStations.
 /// # Example
@@ -976,3 +982,5 @@ pub struct Child {
     /// The video original Height
     pub original_height: Option<u16>,
 }
+
+impl traits::Child for Child {}

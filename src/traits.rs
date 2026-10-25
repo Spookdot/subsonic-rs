@@ -24,61 +24,21 @@ pub trait SubsonicServerInfo {
     /// and [`OpenSubsonicResponse`](crate::opensubsonic::models::OpenSubsonicResponse)
     type SubsonicResponse<T: DeserializeOwned + Serialize + Debug>: DeserializeOwned + SubsonicResponseTrait<T, Self::ErrorData>;
     type ErrorData: ErrorDataTrait + Debug;
-    /// ReturnType for the [`Client::search3()`](crate::Client::search3()) method
-    ///
-    /// See: [`subsonic::models::SearchResult3`](crate::subsonic::models::SearchResult3)
-    /// and [`opensubsonic::models::SearchResult3`](crate::opensubsonic::models::SearchResult3)
-    type SearchResult3: Serialize + DeserializeOwned + Debug;
-    /// ReturnType for the [`Client::search2()`](crate::Client::search2()) method
-    ///
-    /// See: [`subsonic::models::SearchResult2`](crate::subsonic::models::SearchResult2)
-    /// and [`opensubsonic::models::SearchResult2`](crate::opensubsonic::models::SearchResult2)
-    type SearchResult2: Serialize + DeserializeOwned + Debug;
-    /// ReturnType for the [`Client::search()`](crate::Client::search()) method
-    ///
-    /// See: [`subsonic::models::SearchResult`](crate::subsonic::models::SearchResult)
-    /// and [`opensubsonic::models::SearchResult`](crate::opensubsonic::models::SearchResult)
-    type SearchResult: Serialize + DeserializeOwned + Debug;
     /// Type used to represent songs in the API
     /// For example method [`Client::get_song()`](crate::Client::get_song())
     ///
     /// See: [`subsonic::models::Child`](crate::subsonic::models::Child)
     /// and [`opensubsonic::models::Child`](crate::opensubsonic::models::Child)
-    type Child: Serialize + DeserializeOwned + Debug;
-    /// Type used to represent a Bookmark
-    /// For example method [`Client::get_bookmarks()`](crate::Client::get_bookmarks())
-    ///
-    /// See: [`subsonic::models::Bookmark`](crate::subsonic::models::Bookmark)
-    /// and [`opensubsonic::models::Bookmark`](crate::opensubsonic::models::Bookmark)
-    type Bookmarks: Serialize + DeserializeOwned + Debug;
-    /// Type used to represent InternetRadioStations
-    /// For example method [`Client::get_internet_radio_stations()`](crate::Client::get_internet_radio_stations())
-    ///
-    /// See: 
-    /// See: [`subsonic::models::InternetRadioStations`](crate::subsonic::models::InternetRadioStations)
-    /// and [`opensubsonic::models::InternetRadioStations`](crate::opensubsonic::models::InternetRadioStations)
-    type InternetRadioStations: Serialize + DeserializeOwned + Debug;
+    type Child: Child + Serialize + DeserializeOwned + Debug;
     /// Type used to represent Playlists
     /// For example method [`Client::create_playlist()`](crate::Client::create_playlist())
     ///
     /// See: 
     /// See: [`subsonic::models::PlaylistWithSongs`](crate::subsonic::models::PlaylistWithSongs)
     /// and [`opensubsonic::models::PlaylistWithSongs`](crate::opensubsonic::models::PlaylistWithSongs)
-    type PlaylistWithSongs: Serialize + DeserializeOwned + Debug;
-    /// Type used to represent a collection of Playlists
-    /// For example method [`Client::get_playlists()`](crate::Client::get_playlists())
-    ///
-    /// See: 
-    /// See: [`subsonic::models::Playlists`](crate::subsonic::models::Playlists)
-    /// and [`opensubsonic::models::Playlists`](crate::opensubsonic::models::Playlists)
-    type Playlists: Serialize + DeserializeOwned + Debug;
-    /// Type used to represent a collection of Shares
-    /// For example method [`Client::create_share()`](crate::Client::create_share())
-    ///
-    /// See: 
-    /// See: [`subsonic::models::Shares`](crate::subsonic::models::Shares)
-    /// and [`opensubsonic::models::Shares`](crate::opensubsonic::models::Shares)
-    type Shares: Serialize + DeserializeOwned + Debug;
+    type PlaylistWithSongs: PlaylistWithSongs + Serialize + DeserializeOwned + Debug;
+    type InternetRadioStation: InternetRadioStation + Serialize + DeserializeOwned + Debug;
+    type Playlist: Playlist + Serialize + DeserializeOwned + Debug;
 }
 
 // TODO rename Trait
@@ -112,5 +72,10 @@ pub trait SubsonicAuthenticationTrait {
     fn legacy_password(username: &str, password: &str) -> Self;
     fn hashed_password(username: &str, password: &str) -> Self;
 }
+
+pub trait Child {}
+pub trait Playlist {}
+pub trait PlaylistWithSongs {}
+pub trait InternetRadioStation {}
 
 pub trait ErrorDataTrait {}

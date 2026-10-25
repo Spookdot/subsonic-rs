@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use crate::models::SubsonicErrorCode;
 use crate::models::Artist;
+use crate::traits;
 use crate::traits::ErrorDataTrait;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -355,6 +356,8 @@ pub struct Playlist {
     pub valid_until: Option<Box<str>>,
 }
 
+impl traits::Playlist for Playlist {}
+
 /// Playlist with songs.
 /// # Example
 /// ```
@@ -438,6 +441,8 @@ pub struct PlaylistWithSongs {
     pub entry: Vec<Child>,
 }
 
+impl traits::PlaylistWithSongs for PlaylistWithSongs {}
+
 /// An internetRadioStation.
 /// # Example
 /// ```
@@ -465,6 +470,8 @@ pub struct InternetRadioStation {
     /// The cover art id.
     pub cover_art: Option<Box<str>>,
 }
+
+impl traits::InternetRadioStation for InternetRadioStation {}
 
 /// internetRadioStations.
 /// # Example
@@ -1311,6 +1318,8 @@ pub struct Child {
     /// The list of groupings associated with the song.
     pub groupings: Option<Vec<Box<str>>>
 }
+
+impl traits::Child for Child {}
 
 /// A work associated with a song.
 /// # Example
